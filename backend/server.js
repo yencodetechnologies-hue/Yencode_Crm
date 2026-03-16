@@ -26,7 +26,7 @@ const emailOTP = require("./routes/emailotpRoute")
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 4132;
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 app.use(express.json());

@@ -2,7 +2,7 @@
 import axios from "axios";
 
 export const projectServices = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL,
+  baseURL: "http://72.61.236.154:4132",
 });
 
 projectServices.interceptors.request.use(
