@@ -4,15 +4,5 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  server: {
-    proxy: {
-      // Local dev: frontend calls /api/*, Vite proxies to local backend.
-      "/api": {
-        target: "http://localhost:4132",
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, ""),
-      },
-    },
-  },
+  // No dev proxy needed when using a full VITE_BASE_URL (e.g. http://72.61.236.154:4132)
 })
