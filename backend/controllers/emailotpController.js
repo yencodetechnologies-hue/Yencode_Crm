@@ -20,8 +20,10 @@ const sendOTP = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // Check if employee exists
-    let user = await employeeSchema.findOne({ email });
+    // Check if employee exists (work or personal email)
+    let user = await employeeSchema.findOne({
+      $or: [{ email }, { officeEmail: email }, { alternateEmail: email }],
+    });
 
     // If not an employee, check if this is a superadmin/admin
     if (!user) {
@@ -169,7 +171,9 @@ const verifyOTP = async (req, res) => {
     }
 
     // OTP is valid - get employee or admin data
-    let empData = await employeeSchema.findOne({ email });
+    let empData = await employeeSchema.findOne({
+      $or: [{ email }, { officeEmail: email }, { alternateEmail: email }],
+    });
     let adminData = null;
 
     if (!empData) {

@@ -38,9 +38,11 @@ const createEmployee = async (req, res) => {
 
 const getAllEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find({
-      // role: { $nin: ['Superadmin', 'Lead'] }
-    });
+    const filter = {};
+    if (req.query.salesOnly === 'true') {
+      filter.role = { $in: ['Telecaller', 'Lead', 'telecaller', 'lead'] };
+    }
+    const employees = await Employee.find(filter);
     res.status(200).json(employees);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -169,7 +171,7 @@ const fetchAddressDetailsByPincode = async (pincode) => {
 const getEmployeeDetailsById = async (req, res) => {
   try {
     const { id } = req.params;
-    const employee = await Employee.findById(id, 'name email password empId');
+    const employee = await Employee.findById(id, 'name email password empId role');
 
     if (!employee) {
       return res.status(404).json({ error: "Employee not found" });

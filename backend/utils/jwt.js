@@ -5,13 +5,18 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h';
 
 const normalizeRole = (role) => {
   const map = {
+    superadmin: 'Admin',
     Superadmin: 'Admin',
+    admin: 'Admin',
     Admin: 'Admin',
-    Lead: 'Lead',
+    telecaller: 'Telecaller',
     Telecaller: 'Telecaller',
+    lead: 'Lead',
+    Lead: 'Lead',
     employee: 'employee',
+    Employee: 'employee',
   };
-  return map[role] || role;
+  return map[role] || map[String(role).toLowerCase()] || role;
 };
 
 const generateToken = (user, userType = 'employee') => {

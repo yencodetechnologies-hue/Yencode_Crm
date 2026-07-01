@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { employeename, createLeave } from "../../api/services/projectServices";
 import { useNavigate } from "react-router-dom";
+import { PageShell, Card, Button, Input, Select, Label, Spinner, useToast } from "../ui";
 
 function Leave() {
   const [employees, setEmployees] = useState([]);
@@ -26,6 +27,7 @@ function Leave() {
 
   const [currentDate, setCurrentDate] = useState("");
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const fetchEmployeeData = async () => {
@@ -98,7 +100,7 @@ function Leave() {
       console.log(response);
 
       if (response.status === 201) {
-        alert("Leave data submitted successfully!");
+        showToast("Leave request submitted successfully!");
         setLeave({
           employee: "",
           leaveCategory: "",
@@ -118,7 +120,7 @@ function Leave() {
       }
     } catch (error) {
       console.error("Error submitting data:", error);
-      alert("There was an error submitting the data.");
+      showToast("There was an error submitting the data.", "error");
     }
   };
 
@@ -126,256 +128,147 @@ function Leave() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <p className="text-xl">Loading...</p>
-      </div>
+      <PageShell title="Apply for Leave">
+        <Spinner className="py-20" />
+      </PageShell>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex justify-center items-center">
-        <p className="text-xl text-red-600">{error}</p>
-      </div>
+      <PageShell title="Apply for Leave">
+        <p className="text-center text-red-600 py-10">{error}</p>
+      </PageShell>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 mt-12">
-      <h2 className="text-4xl font-bold mb-10 text-center mt-20">Leave Application Form</h2>
-      <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
-        <div className="border border-blue-500 p-6 rounded-lg">
-          <div className="space-y-8 pb-4">
+    <PageShell
+      title="Apply for Leave"
+      description="Submit a leave or permission request"
+    >
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="p-6">
+          <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-6">Request Details</h3>
+          <div className="space-y-5">
             {role === "Superadmin" ? (
               <div>
-                <label className="block text-sm font-medium pb-4">Select Employee:</label>
-                <select
-                  name="employee"
-                  value={leave.employee}
-                  onChange={handleChange}
-                  required
-                  className="border border-blue-300 p-2 w-full rounded"
-                >
+                <Label required>Select Employee</Label>
+                <Select name="employee" value={leave.employee} onChange={handleChange} required>
                   <option value="">Select Employee</option>
                   {employees.map((employee) => (
-                    <option key={employee._id} value={employee.name}>
-                      {employee.name}
-                    </option>
+                    <option key={employee._id} value={employee.name}>{employee.name}</option>
                   ))}
-                </select>
+                </Select>
               </div>
             ) : (
               <div>
-                <label className="block text-sm font-medium pb-4">Employee Name:</label>
-                <input
-                  type="text"
-                  value={leave.employee}
-                  readOnly
-                  className="border border-blue-300 p-2 w-full rounded bg-gray-100"
-                />
+                <Label>Employee Name</Label>
+                <Input type="text" value={leave.employee} readOnly className="bg-slate-100" />
               </div>
             )}
-            <div className="pb-4">
-              <label className="block text-sm font-medium pb-4">Category:</label>
-              <div className="flex space-x-4">
-                <div>
-                  <input
-                    type="radio"
-                    id="leave"
-                    name="leaveCategory"
-                    value="Leave"
-                    onChange={handleChange}
-                    checked={leave.leaveCategory === "Leave"}
-                    className="mr-2"
-                  />
-                  <label htmlFor="leave">Leave</label>
-                </div>
-                <div>
-                  <input
-                    type="radio"
-                    id="permission"
-                    name="leaveCategory"
-                    value="Permission"
-                    onChange={handleChange}
-                    checked={leave.leaveCategory === "Permission"}
-                    className="mr-2"
-                  />
-                  <label htmlFor="permission">Permission</label>
-                </div>
+            <div>
+              <Label required>Category</Label>
+              <div className="flex gap-6 mt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="leaveCategory" value="Leave" onChange={handleChange} checked={leave.leaveCategory === "Leave"} className="text-primary" />
+                  <span className="text-sm">Leave</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="leaveCategory" value="Permission" onChange={handleChange} checked={leave.leaveCategory === "Permission"} className="text-primary" />
+                  <span className="text-sm">Permission</span>
+                </label>
               </div>
             </div>
 
             {leave.leaveCategory === "Leave" && (
               <div>
-                <label className="block text-sm font-medium pb-4">Leave Type:</label>
-                <select
-                  name="leaveType"
-                  value={leave.leaveType}
-                  onChange={handleChange}
-                  required
-                  className="border border-blue-300 p-2 w-full rounded"
-                >
+                <Label required>Leave Type</Label>
+                <Select name="leaveType" value={leave.leaveType} onChange={handleChange} required>
                   <option value="">Select Leave Type</option>
-                  {leaveTypes
-                    .filter(type => !type.includes("Permission"))
-                    .map((type, index) => (
-                      <option key={index} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                </select>
+                  {leaveTypes.filter(type => !type.includes("Permission")).map((type, index) => (
+                    <option key={index} value={type}>{type}</option>
+                  ))}
+                </Select>
               </div>
             )}
-          {leave.leaveType === "Others" && leave.leaveCategory === "Leave" && (
+            {leave.leaveType === "Others" && leave.leaveCategory === "Leave" && (
               <div>
-                <label className="block text-sm font-medium pb-4">Specify Leave Type:</label>
-                <textarea
-                  name="customLeaveType"
-                  value={leave.customLeaveType}
-                  onChange={handleChange}
-                  className="border border-blue-300 p-2 w-full rounded"
-                  placeholder="Enter custom leave type"
-                />
+                <Label>Specify Leave Type</Label>
+                <textarea name="customLeaveType" value={leave.customLeaveType} onChange={handleChange}
+                  className="w-full border border-slate-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter custom leave type" />
               </div>
-            )}  
-
-
+            )}
             {leave.leaveCategory === "Leave" && (
               <div>
-                <label className="block text-sm font-medium pb-4">Leave Dates:</label>
-                <div className="flex space-x-4">
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={leave.startDate}
-                    onChange={handleChange}
-                    className="border border-blue-300 p-2 w-full rounded"
-                    required
-                    min={currentDate}
-                  />
-                  <span className="pt-2">to</span>
-                  <input
-                    type="date"
-                    name="endDate"
-                    value={leave.endDate}
-                    onChange={handleChange}
-                    className="border border-blue-300 p-2 w-full rounded"
-                    required
-                    min={currentDate}
-                  />
+                <Label required>Leave Dates</Label>
+                <div className="flex items-center gap-3 mt-1">
+                  <Input type="date" name="startDate" value={leave.startDate} onChange={handleChange} required min={currentDate} />
+                  <span className="text-slate-500 text-sm">to</span>
+                  <Input type="date" name="endDate" value={leave.endDate} onChange={handleChange} required min={currentDate} />
                 </div>
               </div>
             )}
-
             {leave.leaveCategory === "Permission" && (
               <div>
-                <label className="block text-sm font-medium pb-4">Permission Type:</label>
-                <select
-                  name="leaveType"
-                  value={leave.leaveType}
-                  onChange={handleChange}
-                  required
-                  className="border border-blue-300 p-2 w-full rounded"
-                >
+                <Label required>Permission Type</Label>
+                <Select name="leaveType" value={leave.leaveType} onChange={handleChange} required>
                   <option value="">Select Permission Type</option>
-                  {leaveTypes
-                    .filter(type => type.includes("Permission") || type === "Others")
-                    .map((type, index) => (
-                      <option key={index} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                </select>
+                  {leaveTypes.filter(type => type.includes("Permission") || type === "Others").map((type, index) => (
+                    <option key={index} value={type}>{type}</option>
+                  ))}
+                </Select>
               </div>
             )}
             {leave.leaveType === "Others" && leave.leaveCategory === "Permission" && (
               <div>
-                <label className="block text-sm font-medium pb-4">Specify Permission Type:</label>
-                <textarea
-                  name="customPermissionType"
-                  value={leave.customPermissonType}
-                  onChange={handleChange}
-                  className="border border-blue-300 p-2 w-full rounded"
-                  placeholder="Enter custom permission type"
-                />
+                <Label>Specify Permission Type</Label>
+                <textarea name="customPermissionType" value={leave.customPermissonType} onChange={handleChange}
+                  className="w-full border border-slate-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter custom permission type" />
               </div>
             )}
             {leave.leaveCategory === "Permission" && (
-              <div>
-                <label className="block text-sm font-medium pb-4">Permission Date:</label>
-                <input
-                  type="date"
-                  name="permissionDate"
-                  value={leave.permissionDate}
-                  onChange={handleChange}
-                  className="border border-blue-300 p-2 w-full rounded"
-                  required
-                  min={currentDate}
-                />
-              </div>
-            )}
-            {leave.leaveCategory === "Permission" && (
-              <div>
-                <label className="block text-sm font-medium pb-4">Time Range:</label>
-                <div className="flex space-x-4">
-                  <input
-                    type="time"
-                    name="startTime"
-                    value={leave.startTime}
-                    onChange={handleChange}
-                    className="border border-blue-300 p-2 w-full rounded"
-                    required
-                  />
-                  <span className="pt-2">to</span>
-                  <input
-                    type="time"
-                    name="endTime"
-                    value={leave.endTime}
-                    onChange={handleChange}
-                    className="border border-blue-300 p-2 w-full rounded"
-                    required
-                  />
+              <>
+                <div>
+                  <Label required>Permission Date</Label>
+                  <Input type="date" name="permissionDate" value={leave.permissionDate} onChange={handleChange} required min={currentDate} />
                 </div>
-              </div>
+                <div>
+                  <Label required>Time Range</Label>
+                  <div className="flex items-center gap-3 mt-1">
+                    <Input type="time" name="startTime" value={leave.startTime} onChange={handleChange} required />
+                    <span className="text-slate-500 text-sm">to</span>
+                    <Input type="time" name="endTime" value={leave.endTime} onChange={handleChange} required />
+                  </div>
+                </div>
+              </>
             )}
           </div>
-        </div>
-        <div className="border border-blue-500 p-6 rounded-lg">
-          <div className="space-y-8 pb-4">
+        </Card>
+
+        <Card className="p-6">
+          <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-6">Additional Info</h3>
+          <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium pb-4">Remarks:</label>
-              <textarea
-                name="remarks"
-                value={leave.remarks}
-                onChange={handleChange}
-                required
-                className="border border-blue-300 p-2 w-full rounded"
-                placeholder="Add any remarks"
-              />
+              <Label required>Remarks</Label>
+              <textarea name="remarks" value={leave.remarks} onChange={handleChange} required
+                className="w-full border border-slate-300 rounded-lg p-3 min-h-[120px] text-sm focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Add any remarks" />
             </div>
             <div>
-              <label className="block text-sm font-medium pb-4">Attachment:</label>
-              <input
-                type="file"
-                name="attachment"
-                onChange={handleFileChange}
-                className="border border-blue-300 p-2 w-full rounded"
-              />
+              <Label>Attachment</Label>
+              <div className="mt-1 border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
+                <Input type="file" name="attachment" onChange={handleFileChange} className="border-0 p-0" />
+                <p className="text-xs text-slate-500 mt-2">Upload supporting documents (optional)</p>
+              </div>
             </div>
-
-
           </div>
-        </div>
-        <div className="col-span-2 flex justify-center mt-6">
-          <button
-            type="submit"
-            className="bg-[#2563eb] text-white border border-black px-8 py-2 rounded-md hover:bg-blue-600"
-          >
-            Submit
-          </button>
+        </Card>
+
+        <div className="lg:col-span-2 flex justify-center">
+          <Button type="submit" size="lg">Submit Request</Button>
         </div>
       </form>
-    </div>
+    </PageShell>
   );
 }
 

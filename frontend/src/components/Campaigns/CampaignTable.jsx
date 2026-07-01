@@ -8,6 +8,7 @@ import {
   assignCampaignAgents,
   getAllEmployees,
 } from '../../api/services/projectServices';
+import { normalizeRole } from '../../utils/roles';
 
 const CampaignTable = () => {
   const [campaigns, setCampaigns] = useState([]);
@@ -25,7 +26,7 @@ const CampaignTable = () => {
 
   useEffect(() => {
     load();
-    getAllEmployees().then((res) => {
+    getAllEmployees({ salesOnly: 'true' }).then((res) => {
       if (res.status === 200) setEmployees(res.data);
     });
   }, []);
@@ -130,7 +131,7 @@ const CampaignTable = () => {
             <label key={e._id} className="flex items-center gap-1">
               <input type="checkbox" checked={selectedAgents.includes(e._id)}
                 onChange={(ev) => setSelectedAgents(ev.target.checked ? [...selectedAgents, e._id] : selectedAgents.filter((id) => id !== e._id))} />
-              {e.name}
+              {e.name} ({normalizeRole(e.role) || 'No role'})
             </label>
           ))}
         </div>

@@ -361,16 +361,9 @@ import CallingPanel from "./components/Calling/CallingPanel";
 import FollowUpList from "./components/FollowUps/FollowUpList";
 import CampaignTable from "./components/Campaigns/CampaignTable";
 import Reports from "./components/Reports/Reports";
+import { ToastProvider } from "./components/ui";
 import { refreshSession, isSessionExpired } from "./utils/session";
-
-const normalizeRole = (role) => {
-  const map = { Superadmin: 'Admin' };
-  return map[role] || role;
-};
-
-const TELECALLER_ROLES = ['Telecaller'];
-const LEAD_ROLES = ['Lead'];
-const ADMIN_ROLES = ['Admin', 'Superadmin'];
+import { normalizeRole, isTelecallerRole, isLeadRole, isAdminRole } from "./utils/roles";
 
 const RouteTransition = ({ children }) => {
   return <>{children}</>;
@@ -432,7 +425,7 @@ const AdminLayout = ({ children, loading }) => {
     <div className="app">
       {loading && <Preloader />} 
       {!loading && <Topbar />}  
-      <div className="main-content">
+      <div className="main-content bg-slate-50 min-h-screen">
         {children}
       </div>
     </div>
@@ -441,16 +434,22 @@ const AdminLayout = ({ children, loading }) => {
 
 function App() {
   return (
-    <Router>
-      <RoutesWithPreloader />
-    </Router>
+    <ToastProvider>
+      <Router>
+        <RoutesWithPreloader />
+      </Router>
+    </ToastProvider>
   );
 }
 
 const RoutesWithPreloader = () => {
-  const role = localStorage.getItem("role") || "";
   const location = useLocation();
-  const [loading, setLoading] = useState(true); 
+  const [role, setRole] = useState(() => normalizeRole(localStorage.getItem("role") || ""));
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setRole(normalizeRole(localStorage.getItem("role") || ""));
+  }, [location.pathname]);
 
   useEffect(() => {
     const loadingRoutes = [
@@ -567,20 +566,20 @@ const RoutesWithPreloader = () => {
     if (role === 'employee') {
       return employeeRoutes.some(route => path.startsWith(route));
     }
-    if (TELECALLER_ROLES.includes(role)) {
+    if (isTelecallerRole(role)) {
       return telecallerRoutes.some(route => path.startsWith(route));
     }
-    if (LEAD_ROLES.includes(role)) {
+    if (isLeadRole(role)) {
       return leadRoutes.some(route => path.startsWith(route));
     }
-    if (ADMIN_ROLES.includes(role) || normalizeRole(role) === 'Admin') {
+    if (isAdminRole(role)) {
       return adminRoutes.some(route => path.startsWith(route));
     }
     return adminRoutes.some(route => path.startsWith(route));
   };
 
-  const isTelecallerOnly = TELECALLER_ROLES.includes(role);
-  const isLead = LEAD_ROLES.includes(role);
+  const isTelecallerOnly = isTelecallerRole(role);
+  const isLead = isLeadRole(role);
 
   const telecallerRouteElements = (
     <>

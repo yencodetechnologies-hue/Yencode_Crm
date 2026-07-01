@@ -123,9 +123,9 @@ export const employeename = async (id) => {
   }
 };
 
-export const getAllEmployees = async () => {
+export const getAllEmployees = async (params = {}) => {
   try {
-    const response = await projectServices.get(`/getallemployees`);
+    const response = await projectServices.get(`/getallemployees`, { params });
     return response;
   } catch (err) {
     return err;
@@ -851,9 +851,9 @@ export const assignCampaignAgents = async (id, agentIds) => {
 };
 
 // --- Dashboard & Reports ---
-export const getDashboardMetrics = async () => {
+export const getDashboardMetrics = async (params = {}) => {
     try {
-        const response = await projectServices.get('/dashboard/metrics');
+        const response = await projectServices.get('/dashboard/metrics', { params });
         return response;
     } catch (err) {
         return err;

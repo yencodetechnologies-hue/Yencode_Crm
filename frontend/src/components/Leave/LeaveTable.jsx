@@ -6,11 +6,14 @@ import {
     usePagination
 } from 'react-table';
 import { Edit, Trash2 } from 'lucide-react';
-import { FaPlus, FaFileDownload, FaFilter } from 'react-icons/fa';
+import { FaPlus, FaFileDownload } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { getAllLeaves, updateLeaveStatus, deleteLeave } from '../../api/services/projectServices';
 import * as XLSX from 'xlsx';
+import {
+    PageShell, Card, Button, Input, Label, Badge, Spinner, EmptyState, DataTableToolbar, Select,
+} from '../ui';
 
 const LeaveTable = () => {
     const [leaves, setLeaves] = useState([]);
@@ -220,19 +223,19 @@ const LeaveTable = () => {
                 Header: 'Status',
                 accessor: 'status',
                 Cell: ({ row }) => (
-                    <select
-                        value={row.original.status}
-                        onChange={(e) => role === "Superadmin" && handleStatusChange(row.original._id, e.target.value)}
-                        disabled={role !== "Superadmin"}
-                        className={`whitespace-nowrap px-3 py-1 rounded text-sm border ${row.original.status === 'Approved' ? 'bg-green-100 text-green-800 border-green-200' :
-                            row.original.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                                'bg-red-100 text-red-800 border-red-200'}, ${role !== "Superadmin" ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}
-                    `}
-                    >
-                        <option value="Pending">Pending</option>
-                        <option value="Approved">Approved</option>
-                        <option value="Rejected">Rejected</option>
-                    </select>
+                    role === "Superadmin" ? (
+                        <Select
+                            value={row.original.status}
+                            onChange={(e) => handleStatusChange(row.original._id, e.target.value)}
+                            className="w-auto min-w-[120px]"
+                        >
+                            <option value="Pending">Pending</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Rejected">Rejected</option>
+                        </Select>
+                    ) : (
+                        <Badge status={row.original.status} />
+                    )
                 )
             },
             {
@@ -314,107 +317,76 @@ const LeaveTable = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="text-xl">Loading...</div>
-            </div>
+            <PageShell title="Leave Requests">
+                <Spinner className="py-20" />
+            </PageShell>
         );
     }
 
     if (error) {
         return (
-            <div className="flex justify-center items-center h-screen text-red-500">
-                {error}
-            </div>
+            <PageShell title="Leave Requests">
+                <EmptyState title="Error" description={error} />
+            </PageShell>
         );
     }
 
     return (
-        <div className="mx-auto p-4">
-            <h2 className="text-4xl font-bold mb-10 text-center mt-24">Leave Details</h2>
-
-            <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center space-x-4">
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={globalFilter || ''}
-                            onChange={(e) => setGlobalFilter(e.target.value)}
-                            placeholder="Search records..."
-                            className="border border-blue-500 p-2 rounded w-64 pl-8"
-                        />
-                        <FaFilter className="absolute left-2 top-3 text-blue-500" />
-                    </div>
-
-                    <div className="flex space-x-4 items-center -mt-6">
-                        {role === "Superadmin" && (
-                            <>
-                                <div>
-                                    <label htmlFor="startDate" className="block">Start Date</label>
-                                    <input
-                                        type="date"
-                                        id="startDate"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                        min={new Date().toISOString().split('T')[0]}
-                                        className="border border-blue-500 p-2 rounded w-32"
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="endDate" className="block">End Date</label>
-                                    <input
-                                        type="date"
-                                        id="endDate"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        min={new Date().toISOString().split('T')[0]}
-                                        className="border border-blue-500 p-2 rounded w-32"
-                                    />
-                                </div>
-                                <button
-                                    onClick={applyDateFilter}
-                                    className="bg-blue-500 text-white px-6 py-2 rounded h-10 w-auto text-sm mt-6"
-                                >
-                                    Apply Filter
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex space-x-4">
+        <PageShell
+            title="Leave Requests"
+            description="View and manage your leave applications"
+            actions={
+                <>
                     {role === "Superadmin" && (
-                        <button
-                            onClick={exportToExcel}
-                            className="bg-green-500 text-white px-6 py-2 rounded flex items-center hover:bg-green-600"
-                        >
-                            <FaFileDownload className="mr-2" />
-                            Export Data
-                        </button>
+                        <Button variant="secondary" onClick={exportToExcel}>
+                            <FaFileDownload /> Export
+                        </Button>
                     )}
-
-                    <Link
-                        to="/leave"
-                        className="bg-blue-500 text-white px-6 py-2 rounded flex items-center hover:bg-blue-600"
-                    >
-                        <FaPlus className="mr-2" />
-                        Add Leave
+                    <Link to="/leave">
+                        <Button><FaPlus /> Apply Leave</Button>
                     </Link>
-                </div>
-            </div>
+                </>
+            }
+        >
+            <DataTableToolbar
+                searchValue={globalFilter}
+                onSearchChange={setGlobalFilter}
+                searchPlaceholder="Search leave records..."
+                filters={
+                    role === "Superadmin" && (
+                        <div className="flex flex-wrap items-end gap-3">
+                            <div>
+                                <Label>Start Date</Label>
+                                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-40" />
+                            </div>
+                            <div>
+                                <Label>End Date</Label>
+                                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-40" />
+                            </div>
+                            <Button variant="secondary" onClick={applyDateFilter}>Apply Filter</Button>
+                        </div>
+                    )
+                }
+            />
 
-            <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+            <Card className="overflow-hidden">
                 {leaves.length === 0 ? (
-                    <p className="text-center p-4">No leave records found.</p>
+                    <EmptyState
+                        title="No leave records"
+                        description="You haven't submitted any leave requests yet"
+                        action={<Link to="/leave"><Button>Apply Leave</Button></Link>}
+                    />
                 ) : (
-                    <>
-                        <table {...getTableProps()} className="w-full">
-                            <thead className="bg-[#2563eb] text-white border-b">
+                <>
+                <div className="overflow-x-auto">
+                <table {...getTableProps()} className="w-full text-sm">
+                    <thead className="bg-slate-50 border-b border-slate-200">
                                 {headerGroups.map((headerGroup) => (
                                     <tr {...headerGroup.getHeaderGroupProps()}>
                                         {headerGroup.headers.map((column) => (
                                             <th
                                                 {...column.getHeaderProps(column.getSortByToggleProps())}
-                                                className="p-4 text-left cursor-pointer whitespace-nowrap"
+                                                className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide cursor-pointer whitespace-nowrap"
                                             >
                                                 <div className="flex items-center">
                                                     {column.render("Header")}
@@ -434,13 +406,10 @@ const LeaveTable = () => {
                                     return (
                                         <tr
                                             {...row.getRowProps()}
-                                            className="border-b hover:bg-gray-50 transition-colors"
+                                            className="border-b border-slate-100 even:bg-slate-50/50 hover:bg-slate-50"
                                         >
                                             {row.cells.map(cell => (
-                                                <td
-                                                    {...cell.getCellProps()}
-                                                    className="p-4"
-                                                >
+                                                <td {...cell.getCellProps()} className="px-4 py-3">
                                                     {cell.render('Cell')}
                                                 </td>
                                             ))}
@@ -449,37 +418,21 @@ const LeaveTable = () => {
                                 })}
                             </tbody>
                         </table>
+                </div>
 
-                        <div className="flex justify-between items-center p-4">
-                            <div>
-                                <span>
-                                    Page{' '}
-                                    <strong>
-                                        {pageIndex + 1} of {pageOptions.length}
-                                    </strong>
-                                </span>
-                            </div>
-                            <div className="space-x-2">
-                                <button
-                                    onClick={() => previousPage()}
-                                    disabled={!canPreviousPage}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-                                >
-                                    Previous
-                                </button>
-                                <button
-                                    onClick={() => nextPage()}
-                                    disabled={!canNextPage}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        </div>
-                    </>
+                <div className="flex justify-between items-center px-4 py-3 border-t border-slate-200 bg-slate-50">
+                    <span className="text-sm text-slate-600">
+                        Page <strong>{pageIndex + 1}</strong> of <strong>{pageOptions.length}</strong>
+                    </span>
+                    <div className="flex gap-2">
+                        <Button variant="secondary" size="sm" onClick={previousPage} disabled={!canPreviousPage}>Previous</Button>
+                        <Button variant="secondary" size="sm" onClick={nextPage} disabled={!canNextPage}>Next</Button>
+                    </div>
+                </div>
+                </>
                 )}
-            </div>
-        </div>
+            </Card>
+        </PageShell>
     );
 };
 

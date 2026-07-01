@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import loginImage from "../../assets/logo.png";
 import { sendOTP, verifyOTP } from "../../api/services/projectServices";
 import { refreshSession } from "../../utils/session";
+import { normalizeRole, isSalesRole, isAdminRole } from "../../utils/roles";
 import { AlertCircle, Loader, Copy, Check } from "lucide-react";
 
 const LoginPage = () => {
@@ -101,7 +102,9 @@ const LoginPage = () => {
       if (response.status === 200) {
         const userData = response.data.employee || response.data.admin;
         const { _id } = userData;
-        const role = userData.role || userData.adminType || (response.data.admin ? 'Admin' : 'employee');
+        const role = normalizeRole(
+          userData.role || userData.adminType || (response.data.admin ? 'Admin' : 'employee')
+        );
         localStorage.setItem("empId", _id);
         localStorage.setItem("role", role);
         if (response.data.accessToken) {
@@ -109,13 +112,11 @@ const LoginPage = () => {
         }
         refreshSession();
 
-        const salesRoles = ["Telecaller", "Lead"];
-        const adminRoles = ["Admin", "Superadmin"];
         const from =
           location.state?.from ||
           (role === "employee"
             ? "/attendance-form"
-            : adminRoles.includes(role) || salesRoles.includes(role)
+            : isAdminRole(role) || isSalesRole(role)
             ? "/dashboard"
             : "/attendance-form");
 

@@ -3,6 +3,10 @@ import { deleteMoM, getMoM } from '../../api/services/projectServices';
 import { Calendar, Clock, MapPin, Download, MoreVertical, Eye, Edit, Trash, FileText, Plus } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { useNavigate } from 'react-router-dom';
+import {
+    PageShell, Card, Button, Input, Label, Modal, Spinner, EmptyState, DataTableToolbar, useToast,
+} from '../ui';
+import { isEmployeeRole } from '../../utils/roles';
 
 const BlogPage = () => {
     const [meetingData, setMeetingData] = useState([]);
@@ -13,6 +17,9 @@ const BlogPage = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [role, setRole] = useState(localStorage.getItem("role") || "Superadmin");
+    const navigate = useNavigate();
+    const { showToast } = useToast();
+    const isEmployee = isEmployeeRole(role);
 
     useEffect(() => {
         const fetchMeetingData = async () => {
@@ -51,7 +58,7 @@ const BlogPage = () => {
 
     const applyDateFilter = () => {
         if (!startDate || !endDate) {
-            alert('Please select both start and end dates.');
+            showToast('Please select both start and end dates.', 'error');
             return;
         }
         const start = new Date(startDate.split('/').reverse().join('/'));
@@ -83,11 +90,9 @@ const BlogPage = () => {
             console.log('Meeting deleted:', id);
         } catch (err) {
             console.error('Error deleting meeting:', err);
-            alert('Failed to delete meeting. Please try again.');
+            showToast('Failed to delete meeting. Please try again.', 'error');
         }
     };
-
-    const navigate = useNavigate();
 
     const handleEdit = (meeting) => {
         navigate(`/mom-edit/${meeting._id}`);
@@ -101,230 +106,126 @@ const BlogPage = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            </div>
+            <PageShell title="Meeting Minutes">
+                <Spinner className="py-20" />
+            </PageShell>
         );
     }
 
     if (error) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-red-500 text-lg">{error}</div>
-            </div>
+            <PageShell title="Meeting Minutes">
+                <EmptyState title="Error" description={error} />
+            </PageShell>
         );
     }
 
     return (
-        <div className=" mx-auto px-4 py-8 mt-28">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-800">Meeting Minutes</h1>
-                <div className="flex space-x-4 items-center -mt-6">
-                   
-                        <>
-                            <div>
-                                <label htmlFor="startDate" className="block">Start Date</label>
-                                <input
-                                    type="date"
-                                    id="startDate"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                   
-                                    className="border border-blue-500 p-2 rounded w-32"
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="endDate" className="block">End Date</label>
-                                <input
-                                    type="date"
-                                    id="endDate"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                   
-                                    className="border border-blue-500 p-2 rounded w-32"
-                                />
-                            </div>
-                            <button
-                                onClick={applyDateFilter}
-                                className="bg-blue-500 text-white px-6 py-2 rounded h-10 w-auto text-sm mt-6"
-                            >
-                                Apply Filter
-                            </button>
-                        </>
-                  
-                </div>
-                <div className="flex gap-4">
-                    <button
-                        onClick={handleAddMoM}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                    >
-                        <Plus size={16} />
-                        Add MoM
-                    </button>
-                    {role === "Superadmin" && (
-                        <button
-                            onClick={handleExportData}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                        >
-                            <Download size={16} />
-                            Export Data
-                        </button>
+        <PageShell
+            title="Meeting Minutes"
+            description="Review meeting notes and action items"
+            actions={
+                <>
+                    {!isEmployee && (
+                        <Button onClick={handleAddMoM}>
+                            <Plus size={16} /> Add MoM
+                        </Button>
                     )}
-                </div>
-            </div>
+                    {role === "Superadmin" && (
+                        <Button variant="secondary" onClick={handleExportData}>
+                            <Download size={16} /> Export
+                        </Button>
+                    )}
+                </>
+            }
+        >
+            <DataTableToolbar
+                filters={
+                    <div className="flex flex-wrap items-end gap-3">
+                        <div>
+                            <Label>Start Date</Label>
+                            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-40" />
+                        </div>
+                        <div>
+                            <Label>End Date</Label>
+                            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-40" />
+                        </div>
+                        <Button variant="secondary" onClick={applyDateFilter}>Apply Filter</Button>
+                    </div>
+                }
+            />
 
+            {meetingData.length === 0 ? (
+                <EmptyState title="No meetings found" description="No meeting minutes match your filters" />
+            ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {meetingData.map((meeting, index) => (
-                    <div key={index} className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+                    <Card key={meeting._id || index} hover className="overflow-hidden">
                         <div className="p-6">
-                            <h2 className="text-xl font-bold text-gray-800 mb-4 text-center">{meeting.title}</h2>
-                            <div className="space-y-2 text-gray-600">
+                            <h2 className="text-lg font-semibold text-slate-900 mb-4">{meeting.title}</h2>
+                            <div className="space-y-2 text-sm text-slate-600">
                                 <div className="flex items-center gap-2">
-                                    <Calendar size={16} />
-                                    <span><strong>Date:</strong> {meeting.date}</span>
+                                    <Calendar size={16} className="text-slate-400 shrink-0" />
+                                    <span>{meeting.date}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <Clock size={16} />
-                                    <span><strong>Time:</strong> {meeting.startTime} - {meeting.endTime}</span>
+                                    <Clock size={16} className="text-slate-400 shrink-0" />
+                                    <span>{meeting.startTime} - {meeting.endTime}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <MapPin size={16} />
-                                    <span><strong>Location:</strong> {meeting.location}</span>
+                                    <MapPin size={16} className="text-slate-400 shrink-0" />
+                                    <span>{meeting.location}</span>
                                 </div>
                             </div>
-                            <p className="mt-4 text-gray-600 line-clamp-3"><strong>Attendees:</strong> {meeting.attendees}</p>
-                            <p className="mt-4 text-gray-600 line-clamp-3"><strong>Discussion Notes:</strong> {meeting.discussionNotes}</p>
-                            <p className="mt-4 text-gray-600 line-clamp-3"><strong>Agenda:</strong> {meeting.agenda}</p>
-                            <p className="mt-4 text-gray-600 line-clamp-3"><strong>Action Items:</strong> {meeting.actionItems}</p>
-                            {meeting.agendaFile && (
-                                <div className="mt-2">
-                                    <a href={meeting.agendaFile} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                                        <strong>Agenda File</strong>
-                                    </a>
-                                </div>
-                            )}
-                            {meeting.discussionFile && (
-                                <div className="mt-2">
-                                    <a href={meeting.discussionFile} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                                        <strong>Discussion File</strong>
-                                    </a>
-                                </div>
-                            )}
-                            {meeting.actionFile && (
-                                <div className="mt-2">
-                                    <a href={meeting.actionFile} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                                        <strong>Action File</strong>
-                                    </a>
-                                </div>
-                            )}
-
-
+                            <p className="mt-4 text-sm text-slate-600 line-clamp-2"><strong>Agenda:</strong> {meeting.agenda}</p>
                         </div>
-
-                        <div className="px-6 pb-6 flex justify-between items-center">
-                            <button className="flex items-center gap-2 px-3 py-1 text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
-                                <FileText size={16} />
-                                Agenda
-                            </button>
-                            <div className="relative group">
-                                <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                    <MoreVertical size={16} />
-                                </button>
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                                    <button
-                                        onClick={() => openModal(meeting)}
-                                        className="w-full flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                        <Eye size={16} />
-                                        View Details
-                                    </button>
-                                    <button
-                                        onClick={() => handleEdit(meeting)}
-                                        className="w-full flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
+                        <div className="px-6 pb-4 flex justify-between items-center border-t border-slate-100 pt-4">
+                            <Button variant="ghost" size="sm" onClick={() => openModal(meeting)}>
+                                <Eye size={16} /> View
+                            </Button>
+                            {!isEmployee && (
+                                <div className="flex gap-1">
+                                    <button onClick={() => handleEdit(meeting)} className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg" title="Edit">
                                         <Edit size={16} />
-                                        Edit
                                     </button>
-                                    <button
-                                        onClick={() => handleDelete(meeting._id)}
-                                        className="w-full flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-gray-100 transition-colors"
-                                    >
+                                    <button onClick={() => handleDelete(meeting._id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg" title="Delete">
                                         <Trash size={16} />
-                                        Delete
                                     </button>
                                 </div>
-                            </div>
+                            )}
                         </div>
-                    </div>
+                    </Card>
                 ))}
             </div>
-            {isModalOpen && selectedMeeting && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                        <div className="p-6">
-                            <div className="flex justify-between items-start mb-4">
-                                <h2 className="text-2xl font-bold text-gray-800">{selectedMeeting.title}</h2>
-                                <button
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    ✕
-                                </button>
+            )}
+
+            <Modal isOpen={isModalOpen && !!selectedMeeting} onClose={() => setIsModalOpen(false)} title={selectedMeeting?.title} size="lg">
+                {selectedMeeting && (
+                    <div className="space-y-5 -mt-2 text-sm">
+                        {[
+                            ["Date", selectedMeeting.date],
+                            ["Time", `${selectedMeeting.startTime} - ${selectedMeeting.endTime}`],
+                            ["Location", selectedMeeting.location],
+                            ["Attendees", selectedMeeting.attendees],
+                        ].map(([label, value]) => (
+                            <div key={label}>
+                                <h3 className="font-semibold text-slate-900 mb-1">{label}</h3>
+                                <p className="text-slate-600">{value || "—"}</p>
                             </div>
-
-                            <div className="space-y-6">
-                                <div>
-                                    <h3 className="font-semibold text-gray-800 mb-2">Date and Time</h3>
-                                    <p className="text-gray-600">{selectedMeeting.date}</p>
-                                    <p className="text-gray-600">{selectedMeeting.startTime} - {selectedMeeting.endTime}</p>
-                                </div>
-
-                                <div>
-                                    <h3 className="font-semibold text-gray-800 mb-2">Location</h3>
-                                    <p className="text-gray-600">{selectedMeeting.location}</p>
-                                </div>
-
-                                <div>
-                                    <h3 className="font-semibold text-gray-800 mb-2">Agenda</h3>
-                                    <p className="text-gray-600 whitespace-pre-line">{selectedMeeting.agenda}</p>
-                                </div>
-
-                                <div>
-                                    <h3 className="font-semibold text-gray-800 mb-2">Discussion Notes</h3>
-                                    <p className="text-gray-600 whitespace-pre-line">{selectedMeeting.discussionNotes}</p>
-                                </div>
-
-                                <div>
-                                    <h3 className="font-semibold text-gray-800 mb-2">Action Items</h3>
-                                    <p className="text-gray-600 whitespace-pre-line">{selectedMeeting.actionItems}</p>
-                                </div>
-                                {selectedMeeting.agendaFile && (
-                                    <div className="mt-2">
-                                        <a href={selectedMeeting.agendaFile} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                                            Agenda File
-                                        </a>
-                                    </div>
-                                )}
-                                {selectedMeeting.discussionFile && (
-                                    <div className="mt-2">
-                                        <a href={selectedMeeting.discussionFile} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                                            Discussion File
-                                        </a>
-                                    </div>
-                                )}
-                                {selectedMeeting.actionFile && (
-                                    <div className="mt-2">
-                                        <a href={selectedMeeting.actionFile} target="_blank" rel="noopener noreferrer" className="text-blue-500">
-                                            Action File
-                                        </a>
-                                    </div>
-                                )}
+                        ))}
+                        {["agenda", "discussionNotes", "actionItems"].map((field) => (
+                            <div key={field}>
+                                <h3 className="font-semibold text-slate-900 mb-1 capitalize">{field.replace(/([A-Z])/g, ' $1')}</h3>
+                                <p className="text-slate-600 whitespace-pre-line">{selectedMeeting[field] || "—"}</p>
                             </div>
+                        ))}
+                        <div className="flex justify-end pt-2">
+                            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Close</Button>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )}
+            </Modal>
+        </PageShell>
     );
 };
 

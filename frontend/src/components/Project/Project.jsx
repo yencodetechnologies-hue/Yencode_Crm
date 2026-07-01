@@ -1,71 +1,67 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Eye, ChevronLeft, ChevronRight, Edit, Trash2 } from "lucide-react";
+import { Eye, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { FaFileDownload, FaFilter } from "react-icons/fa";
+import { FaFileDownload } from "react-icons/fa";
 import { deletetheProject, getAllProjects } from "../../api/services/projectServices";
+import {
+  PageShell, Card, Button, Input, Label, Badge, Modal, Spinner, EmptyState, DataTableToolbar, useToast,
+} from "../ui";
+import { isEmployeeRole } from "../../utils/roles";
 
-const ProjectDetailsModal = ({ project, onClose, onEdit }) => {
+const ProjectDetailsModal = ({ project, isOpen, onClose, onEdit, role }) => {
   const renderArrayData = (array, field) => {
     if (!array || !Array.isArray(array) || array.length === 0) return "N/A";
     return array.map((item) => item[field]).filter(Boolean).join(", ");
   };
 
-  const [role, setRole] = useState(localStorage.getItem("role") || "Superadmin");
+  if (!project) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center mt-20">
-      <div className="bg-white rounded-lg p-4 w-full sm:w-2/3 md:w-1/2 lg:w-1/3 max-h-[500px] overflow-auto flex flex-col">
-        <h2 className="text-2xl font-semibold mb-4">Project Details</h2>
-        <div className="flex flex-row justify-between">
-          <div className="w-1/2 pr-4">
-            <section>
-              <h3 className="text-lg font-semibold mb-2">Project Information:</h3>
-              <div className="space-y-2">
-                <p><strong>Project Name:</strong> {renderArrayData(project.projectDetails, "projectName")}</p>
-                <p><strong>Tech Stack:</strong> {renderArrayData(project.projectDetails, "techStack")}</p>
-                <p><strong>Type:</strong> {renderArrayData(project.projectDetails, "type")}</p>
-                <p><strong>Category:</strong> {renderArrayData(project.projectDetails, "category")}</p>
-                <p><strong>Domain:</strong> {renderArrayData(project.projectDetails, "domain")}</p>
-                <p><strong>Requirements:</strong> {renderArrayData(project.projectDetails, "requirements")}</p>
-                <p><strong>Description:</strong> {renderArrayData(project.projectDetails, "description")}</p>
-                <p><strong>Designation:</strong> {renderArrayData(project.projectDetails, "designation")}</p>
+    <Modal isOpen={isOpen} onClose={onClose} title="Project Details" size="lg">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 -mt-2 max-h-[60vh] overflow-y-auto">
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">Project Information</h3>
+          <div className="space-y-2 text-sm">
+            {[
+              ["Project Name", renderArrayData(project.projectDetails, "projectName")],
+              ["Tech Stack", renderArrayData(project.projectDetails, "techStack")],
+              ["Type", renderArrayData(project.projectDetails, "type")],
+              ["Category", renderArrayData(project.projectDetails, "category")],
+              ["Domain", renderArrayData(project.projectDetails, "domain")],
+              ["Description", renderArrayData(project.projectDetails, "description")],
+            ].map(([label, value]) => (
+              <div key={label} className="flex justify-between gap-4 py-1 border-b border-slate-100">
+                <span className="text-slate-500 shrink-0">{label}</span>
+                <span className="font-medium text-right">{value}</span>
               </div>
-            </section>
-          </div>
-          <div className="w-1/2 pl-4">
-            <section>
-              <h3 className="text-lg font-semibold mb-2">Additional Details:</h3>
-              <div className="space-y-2">
-                <p><strong>AddOnServices:</strong> {renderArrayData(project.projectDetails, "addOnServices")}</p>
-                <p><strong>Duration:</strong> {renderArrayData(project.projectDetails, "duration")}</p>
-                <p><strong>Dependencies:</strong> {renderArrayData(project.projectDetails, "dependencies")}</p>
-                <p><strong>Company Name:</strong> {renderArrayData(project.projectDetails, "companyName")}</p>
-                <p><strong>Task:</strong> {renderArrayData(project.projectDetails, "task")}</p>
-                <p><strong>Quoted Value:</strong> {renderArrayData(project.financialDetails, "quotedValue")}</p>
-                <p><strong>Approved Value:</strong> {renderArrayData(project.financialDetails, "approvedValue")}</p>
-                <p><strong>Payment Terms:</strong> {renderArrayData(project.financialDetails, "paymentTerms")}</p>
-                <p><strong>Assigned To:</strong> {renderArrayData(project.additionalDetails, "assignedTo")}</p> {/* Added field */}
-              </div>
-            </section>
+            ))}
           </div>
         </div>
-        <div className="mt-4 flex justify-between">
-          <button
-            onClick={() => onEdit(project)}
-            className={`bg-blue-500 text-white px-4 py-2 rounded ${role !== "Superadmin" ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}`}
-            disabled={role !== "Superadmin"}
-          >
-            Edit
-          </button>
-          <button
-            onClick={onClose}
-            className="bg-red-500 text-white px-6 py-2 rounded"
-          >
-            Close
-          </button>
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">Additional Details</h3>
+          <div className="space-y-2 text-sm">
+            {[
+              ["Duration", renderArrayData(project.projectDetails, "duration")],
+              ["Company", renderArrayData(project.projectDetails, "companyName")],
+              ["Assigned To", renderArrayData(project.additionalDetails, "assignedTo")],
+              ["Quoted Value", renderArrayData(project.financialDetails, "quotedValue")],
+              ["Approved Value", renderArrayData(project.financialDetails, "approvedValue")],
+            ].map(([label, value]) => (
+              <div key={label} className="flex justify-between gap-4 py-1 border-b border-slate-100">
+                <span className="text-slate-500 shrink-0">{label}</span>
+                <span className="font-medium text-right">{value}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+      <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200">
+        {role === "Superadmin" && (
+          <Button onClick={() => onEdit(project)}>Edit</Button>
+        )}
+        <Button variant="secondary" onClick={onClose}>Close</Button>
+      </div>
+    </Modal>
   );
 };
 
@@ -85,6 +81,8 @@ const ProjectManager = () => {
   const [role, setRole] = useState(localStorage.getItem("role") || "Superadmin");
   const id = localStorage.getItem("empId");
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const isEmployee = isEmployeeRole(role);
 
 
   useEffect(() => {
@@ -285,214 +283,154 @@ const ProjectManager = () => {
 
   const totalPages = Math.ceil(filteredAndSortedProjects.length / ITEMS_PER_PAGE);
 
+  if (loading) {
+    return (
+      <PageShell title="Projects">
+        <Spinner className="py-20" />
+      </PageShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageShell title="Projects">
+        <EmptyState title="Error" description={error} />
+      </PageShell>
+    );
+  }
+
   return (
-    <div className="mx-auto p-4 mt-12">
-      <h2 className="text-4xl font-bold mb-10 text-center mt-24">
-        Project List
-      </h2>
-      <div className="mt-12">
-        <div className="flex justify-between items-center mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search projects..."
-              className="border border-blue-500 p-2 rounded w-64 pl-8"
-            />
-            <FaFilter className="absolute left-2 top-3 text-blue-500" />
-          </div>
+    <PageShell
+      title="Projects"
+      description="View your assigned projects"
+      actions={
+        role === "Superadmin" && (
+          <>
+            <Button onClick={handleAddProject}>Add Project</Button>
+            <Button variant="secondary" onClick={handleExportData}>
+              <FaFileDownload /> Export
+            </Button>
+          </>
+        )
+      }
+    >
+      <DataTableToolbar
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search projects..."
+        filters={
+          role === "Superadmin" && (
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <Label>Start Date</Label>
+                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-40" />
+              </div>
+              <div>
+                <Label>End Date</Label>
+                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-40" />
+              </div>
+              <Button variant="secondary" onClick={applyDateFilter}>Apply Filter</Button>
+            </div>
+          )
+        }
+      />
 
-          <div className="flex space-x-4 items-center -mt-6">
-            {role === "Superadmin" && (
-              <>
-                <div>
-                  <label htmlFor="startDate" className="block">Start Date</label>
-                  <input
-                    type="date"
-                    id="startDate"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="border border-blue-500 p-2 rounded w-32"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="endDate" className="block">End Date</label>
-                  <input
-                    type="date"
-                    id="endDate"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="border border-blue-500 p-2 rounded w-32"
-                  />
-                </div>
-                <button
-                  onClick={applyDateFilter}
-                  className="bg-blue-500 text-white px-6 py-2 rounded h-10 w-auto text-sm mt-6"
-                >
-                  Apply Filter
-                </button>
-              </>
-            )}
-          </div>
-          <div className="flex space-x-4">
-          {role === "Superadmin" && (
-            <button
-              onClick={handleAddProject}
-              className="bg-blue-500 text-white px-6 py-2 rounded flex items-center hover:bg-blue-600"
-            >
-              Add Project
-            </button>
-             )}
-            {role === "Superadmin" && (
-              <button
-                onClick={handleExportData}
-                className="bg-green-500 text-white px-6 py-2 rounded flex items-center hover:bg-green-600"
-              >
-                <FaFileDownload className="mr-2" /> Export Data
-              </button>
-            )}
-          </div>
+      {paginatedProjects.length === 0 ? (
+        <EmptyState title="No projects found" description="No projects match your search" />
+      ) : isEmployee ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {paginatedProjects.map((project) => (
+            <Card key={project._id} hover className="p-5" onClick={() => handleView(project)}>
+              <div className="flex items-start justify-between mb-3">
+                <h3 className="font-semibold text-slate-900 line-clamp-1">{project.displayData.projectName}</h3>
+                <Badge status={project.displayData.status} />
+              </div>
+              <p className="text-sm text-slate-500 mb-1">{project.displayData.companyName}</p>
+              <p className="text-xs text-slate-400 mb-3">{project.displayData.techStack}</p>
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span>Assigned: {project.displayData.assignedTo}</span>
+                <span>{project.displayData.duration}</span>
+              </div>
+            </Card>
+          ))}
         </div>
-
-        <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-          {paginatedProjects.length === 0 ? (
-            <p className="text-center p-4">No project records found.</p>
-          ) : loading ? (
-            <p className="text-center p-4">Loading...</p>
-          ) : error ? (
-            <p className="text-center p-4 text-red-500">{error}</p>
-          ) : (
-            <>
-              <table className="w-full">
-                <thead className="bg-[#2563eb] text-white border-b">
+      ) : (
+        <Card className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="p-4 text-left cursor-pointer whitespace-nowrap">
-                      <div className="flex items-center">
-                        S.No
-                      </div>
-                    </th>
-                    <th className="p-4 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('projectName')}>
-                      <div className="flex items-center">
-                        Project Name
-                        <span>{sortConfig.key === 'projectName' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</span>
-                      </div>
-                    </th>
-                    <th className="p-4 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('techStack')}>
-                      <div className="flex items-center">
-                        Tech Stack
-                        <span>{sortConfig.key === 'techStack' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</span>
-                      </div>
-                    </th>
-                    <th className="p-4 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('companyName')}>
-                      <div className="flex items-center">
-                        Client Company
-                        <span>{sortConfig.key === 'companyName' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</span>
-                      </div>
-                    </th>
-                    <th className="p-4 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('assignedTo')}>
-                      <div className="flex items-center">
-                        Assigned To
-                        <span>{sortConfig.key === 'assignedTo' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</span>
-                      </div>
-                    </th>
-                    <th className="p-4 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('duration')}>
-                      <div className="flex items-center">
-                        Duration
-                        <span>{sortConfig.key === 'duration' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</span>
-                      </div>
-                    </th>
-                    <th className="p-4 text-left cursor-pointer whitespace-nowrap">
-                      <div className="flex items-center">
-                        Tasks
-                      </div>
-                    </th>
-                    <th className="p-4 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('status')}>
-                      <div className="flex items-center">
-                        Status
-                        <span>{sortConfig.key === 'status' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</span>
-                      </div>
-                    </th>
-                    <th className="p-4 text-left cursor-pointer whitespace-nowrap" onClick={() => handleSort('createdDate')}>
-                      <div className="flex items-center">
-                        Created Date
-                        <span>{sortConfig.key === 'createdDate' ? (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽') : ''}</span>
-                      </div>
-                    </th>
-                    <th className="p-4 text-left cursor-pointer whitespace-nowrap">
-                      <div className="flex items-center">
-                        Actions
-                      </div>
-                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">S.No</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase cursor-pointer" onClick={() => handleSort('projectName')}>Project Name</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase cursor-pointer" onClick={() => handleSort('techStack')}>Tech Stack</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase cursor-pointer" onClick={() => handleSort('companyName')}>Client</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase cursor-pointer" onClick={() => handleSort('assignedTo')}>Assigned To</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase cursor-pointer" onClick={() => handleSort('status')}>Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedProjects.map((project, index) => (
-                    <tr key={project._id} className="border-b hover:bg-gray-50 transition-colors whitespace-nowrap">
-                      <td className="p-4">{currentPage * ITEMS_PER_PAGE + index + 1}</td>
-                      <td className="p-4">{project.displayData.projectName}</td>
-                      <td className="p-4">{project.displayData.techStack}</td>
-                      <td className="p-4">{project.displayData.companyName}</td>
-                      <td className="p-4">{project.displayData.assignedTo}</td>
-                      <td className="p-4">{project.displayData.duration}</td>
-                      <td className="p-4">{project.displayData.task}</td>
-                      <td className="p-4">{project.displayData.status}</td>
-                      <td className="p-4">{project.displayData.createdDate}</td>
-                      <td className="p-4">
-                        <div className="flex justify-center space-x-2">
-                          <button
-                            className="text-blue-500 hover:bg-blue-100 p-2 rounded-full"
-                            title="View Project"
-                            onClick={() => handleView(project)}
-                          >
-                            <Eye size={20} />
+                    <tr key={project._id} className="border-b border-slate-100 even:bg-slate-50/50 hover:bg-slate-50">
+                      <td className="px-4 py-3">{currentPage * ITEMS_PER_PAGE + index + 1}</td>
+                      <td className="px-4 py-3 font-medium">{project.displayData.projectName}</td>
+                      <td className="px-4 py-3">{project.displayData.techStack}</td>
+                      <td className="px-4 py-3">{project.displayData.companyName}</td>
+                      <td className="px-4 py-3">{project.displayData.assignedTo}</td>
+                      <td className="px-4 py-3"><Badge status={project.displayData.status} /></td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <button className="text-primary hover:bg-primary-light p-2 rounded-lg" onClick={() => handleView(project)} title="View">
+                            <Eye size={18} />
                           </button>
-                          <button
-                            className="text-red-500 hover:bg-red-100 p-2 rounded-full"
-                            title="Delete Project"
-                            onClick={() => handleDelete(project._id)}
-                          >
-                            <Trash2 size={20} />
-                          </button>
+                          {role === "Superadmin" && (
+                            <button className="text-red-500 hover:bg-red-50 p-2 rounded-lg" onClick={() => handleDelete(project._id)} title="Delete">
+                              <Trash2 size={18} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-
-              <div className="flex justify-between items-center p-4">
-                <div>
-                  <span>
-                    Page <strong>{currentPage + 1} of {totalPages}</strong>
-                  </span>
-                </div>
-                <div className="space-x-2">
-                  <button
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 0))}
-                    disabled={currentPage === 0}
-                    className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages - 1))}
-                    disabled={currentPage + 1 === totalPages}
-                    className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-                  >
-                    Next
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {isModalOpen && selectedProject && (
-        <ProjectDetailsModal project={selectedProject} onClose={handleCloseModal} onEdit={handleEdit} />
+          </div>
+          <div className="flex justify-between items-center px-4 py-3 border-t border-slate-200 bg-slate-50">
+            <span className="text-sm text-slate-600">Page <strong>{currentPage + 1}</strong> of <strong>{totalPages || 1}</strong></span>
+            <div className="flex gap-2">
+              <Button variant="secondary" size="sm" onClick={() => setCurrentPage((p) => Math.max(p - 1, 0))} disabled={currentPage === 0}>
+                <ChevronLeft size={16} /> Previous
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages - 1))} disabled={currentPage + 1 >= totalPages}>
+                Next <ChevronRight size={16} />
+              </Button>
+            </div>
+          </div>
+        </Card>
       )}
-    </div>
+
+      {isEmployee && paginatedProjects.length > 0 && totalPages > 1 && (
+        <div className="flex justify-center gap-2 mt-6">
+          <Button variant="secondary" size="sm" onClick={() => setCurrentPage((p) => Math.max(p - 1, 0))} disabled={currentPage === 0}>
+            <ChevronLeft size={16} /> Previous
+          </Button>
+          <span className="flex items-center text-sm text-slate-600 px-2">
+            Page {currentPage + 1} of {totalPages}
+          </span>
+          <Button variant="secondary" size="sm" onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages - 1))} disabled={currentPage + 1 >= totalPages}>
+            Next <ChevronRight size={16} />
+          </Button>
+        </div>
+      )}
+
+      <ProjectDetailsModal
+        project={selectedProject}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onEdit={handleEdit}
+        role={role}
+      />
+    </PageShell>
   );
 };
 

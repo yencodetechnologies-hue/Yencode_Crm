@@ -6,11 +6,14 @@ import {
     usePagination
 } from 'react-table';
 import { Trash2, Eye } from 'lucide-react';
-import { FaPlus, FaFileDownload, FaFilter } from 'react-icons/fa';
+import { FaPlus, FaFileDownload } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { getAllTasks, deleteTask, updateTaskStatus } from '../../api/services/projectServices';
 import * as XLSX from 'xlsx';
+import {
+    PageShell, Card, Button, Input, Label, Badge, Modal, Spinner, EmptyState, DataTableToolbar, Select, useToast,
+} from '../ui';
 
 const TaskList = () => {
     const [tasks, setTasks] = useState([]);
@@ -26,6 +29,7 @@ const TaskList = () => {
     console.log("Fetching tasks for ID:", id);
 
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     useEffect(() => {
         const fetchTasks = async () => {
@@ -192,32 +196,22 @@ const TaskList = () => {
                         row.original.status = updatedStatus;
                         setTasks([...tasks]);
                     } catch (err) {
-                        alert("Failed to update status");
+                        showToast("Failed to update status", "error");
                     }
                 };
 
-                const getStatusStyle = (status) => {
-                    switch (status) {
-                        case 'Completed':
-                            return 'bg-green-500 text-white';
-                        case 'In Progress':
-                            return 'bg-yellow-500 text-white';
-                        case 'Pending':
-                        default:
-                            return 'bg-red-500 text-white';
-                    }
-                };
-
-                return (
-                    <select
-                        value={row.original.status || "Pending"} 
+                return role === "Superadmin" ? (
+                    <Select
+                        value={row.original.status || "Pending"}
                         onChange={handleStatusChange}
-                        className={`border p-2 rounded w-32 ${getStatusStyle(row.original.status)} `}
+                        className="w-auto min-w-[130px]"
                     >
                         <option value="Pending">Pending</option>
                         <option value="In Progress">In Progress</option>
                         <option value="Completed">Completed</option>
-                    </select>
+                    </Select>
+                ) : (
+                    <Badge status={row.original.status || "Pending"} />
                 );
             },
         },
@@ -303,103 +297,72 @@ const TaskList = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="text-xl">Loading...</div>
-            </div>
+            <PageShell title="My Tasks">
+                <Spinner className="py-20" />
+            </PageShell>
         );
     }
 
     if (error) {
         return (
-            <div className="flex justify-center items-center h-screen text-red-500">
-                {error}
-            </div>
+            <PageShell title="My Tasks">
+                <EmptyState title="Error" description={error} />
+            </PageShell>
         );
     }
 
     return (
-        <div className="mx-auto p-4">
-            <h2 className="text-4xl font-bold mb-10 text-center mt-24">Task Details</h2>
-
-            <div className="flex justify-between items-center mb-4">
-                <div className="relative">
-                    <input
-                        type="text"
-                        value={globalFilter || ''}
-                        onChange={(e) => setGlobalFilter(e.target.value)}
-                        placeholder="Search records..."
-                        className="border border-blue-500 p-2 rounded w-64 pl-8"
-                    />
-                    <FaFilter className="absolute left-2 top-3 text-blue-500" />
-                </div>
-                <div className="flex space-x-4 items-center -mt-6">
-                    {role === "Superadmin" && (
-                        <>
-                            <div>
-                                <label htmlFor="startDate" className="block">Start Date</label>
-                                <input
-                                    type="date"
-                                    id="startDate"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    className="border border-blue-500 p-2 rounded w-32"
-                                />
-                            </div>
-                            <div>
-                                <label htmlFor="endDate" className="block">End Date</label>
-                                <input
-                                    type="date"
-                                    id="endDate"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    className="border border-blue-500 p-2 rounded w-32"
-                                />
-                            </div>
-                            <button
-                                onClick={applyDateFilter}
-                                className="bg-blue-500 text-white px-6 py-2 rounded h-10 w-auto text-sm mt-6"
-                            >
-                                Apply Filter
-                            </button>
-                        </>
-                    )}
-                </div>
-
-
-                <div className="flex space-x-4">
-                    {role === "Superadmin" && (
-                        <button
-                            onClick={exportToExcel}
-                            className="bg-green-500 text-white px-6 py-2 rounded flex items-center hover:bg-green-600"
-                        >
-                            <FaFileDownload className="mr-2" />
-                            Export Data
-                        </button>
-                    )}
-
-                    <Link
-                        to="/task-form"
-                        className="bg-blue-500 text-white px-6 py-2 rounded flex items-center hover:bg-blue-600"
-                    >
-                        <FaPlus className="mr-2" />
-                        Add Task
-                    </Link>
-                </div>
-            </div>
-
-            <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-                {tasks.length === 0 ? (
-                    <p className="text-center p-4">No task records found.</p>
-                ) : (
+        <PageShell
+            title="My Tasks"
+            description="View and track your assigned tasks"
+            actions={
+                role === "Superadmin" && (
                     <>
-                        <table {...getTableProps()} className="w-full">
-                            <thead className="bg-[#2563eb] text-white border-b">
+                        <Button variant="secondary" onClick={exportToExcel}>
+                            <FaFileDownload /> Export
+                        </Button>
+                        <Link to="/task-form">
+                            <Button><FaPlus /> Add Task</Button>
+                        </Link>
+                    </>
+                )
+            }
+        >
+            <DataTableToolbar
+                searchValue={globalFilter}
+                onSearchChange={setGlobalFilter}
+                searchPlaceholder="Search tasks..."
+                filters={
+                    role === "Superadmin" && (
+                        <div className="flex flex-wrap items-end gap-3">
+                            <div>
+                                <Label>Start Date</Label>
+                                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-40" />
+                            </div>
+                            <div>
+                                <Label>End Date</Label>
+                                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-40" />
+                            </div>
+                            <Button variant="secondary" onClick={applyDateFilter}>Apply Filter</Button>
+                        </div>
+                    )
+                }
+            />
+
+            <Card className="overflow-hidden">
+                {tasks.length === 0 ? (
+                    <EmptyState title="No tasks found" description="You don't have any tasks assigned yet" />
+                ) : (
+                <>
+                <div className="overflow-x-auto">
+                <table {...getTableProps()} className="w-full text-sm">
+                    <thead className="bg-slate-50 border-b border-slate-200">
                                 {headerGroups.map(headerGroup => (
                                     <tr {...headerGroup.getHeaderGroupProps()}>
                                         {headerGroup.headers.map(column => (
                                             <th
                                                 {...column.getHeaderProps(column.getSortByToggleProps())}
-                                                className="p-4 text-left cursor-pointer  whitespace-nowrap"
+                                                className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wide cursor-pointer whitespace-nowrap"
                                             >
                                                 <div className="flex items-center">
                                                     {column.render('Header')}
@@ -422,13 +385,10 @@ const TaskList = () => {
                                     return (
                                         <tr
                                             {...row.getRowProps()}
-                                            className="border-b hover:bg-gray-50 transition-colors whitespace-nowrap"
+                                            className="border-b border-slate-100 even:bg-slate-50/50 hover:bg-slate-50 whitespace-nowrap"
                                         >
                                             {row.cells.map(cell => (
-                                                <td
-                                                    {...cell.getCellProps()}
-                                                    className="p-4"
-                                                >
+                                                <td {...cell.getCellProps()} className="px-4 py-3">
                                                     {cell.render('Cell')}
                                                 </td>
                                             ))}
@@ -437,97 +397,61 @@ const TaskList = () => {
                                 })}
                             </tbody>
                         </table>
+                </div>
 
-                        <div className="flex justify-between items-center p-4">
-                            <div>
-                                <span>
-                                    Page{' '}
-                                    <strong>
-                                        {pageIndex + 1} of {pageOptions.length}
-                                    </strong>
-                                </span>
-                            </div>
-                            <div className="space-x-2">
-                                <button
-                                    onClick={() => previousPage()}
-                                    disabled={!canPreviousPage}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-                                >
-                                    Previous
-                                </button>
-                                <button
-                                    onClick={() => nextPage()}
-                                    disabled={!canNextPage}
-                                    className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-10">
-                    <div className="bg-white p-6 rounded-lg shadow-lg w-[500px]">
-                        <h2 className="text-xl font-bold mb-4">Task Details</h2>
-                        <div className="mb-4">
-                            <strong>Task Name:</strong> {selectedTask.task}
-                        </div>
-                        <div className="mb-4">
-                            <strong>Project:</strong> {selectedTask.project}
-                        </div>
-                        <div className="mb-4">
-                            <strong>Employee:</strong> {selectedTask.empId}
-                        </div>
-                        <div className="mb-4">
-                            <strong>Description:</strong> {selectedTask.description}
-                        </div>
-                        <div className="mb-4">
-                            <strong>Timeline:</strong> {selectedTask.timeline}
-                        </div>
-                        <div className="mb-4">
-                            <strong>Date:</strong> {selectedTask.date}
-                        </div>
-                        <div className="mb-4">
-                            <strong>Status:</strong> {selectedTask.status}
-                        </div>
-                        <div className="mb-4">
-                            <strong>Attachment:</strong>
-                            {selectedTask.attachments ? (
-                                <a
-                                    href={selectedTask.attachments}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-500 hover:underline"
-                                >
-                                    View Attachment
-                                </a>
-                            ) : (
-                                <span>No Attachment</span>
-                            )}
-                        </div>
-                        <div className="flex justify-end space-x-4">
-                            <button
-                                className={`bg-blue-500 text-white px-4 py-2 rounded ${role !== "Superadmin" ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}`}
-                                onClick={() => navigate(`/task-edit/${selectedTask._id}`)}
-                                disabled={role !== "Superadmin"}
-                            >
-                                Edit
-                            </button>
-                            <button
-                                className="bg-red-500 text-white px-4 py-2 rounded"
-                                onClick={closeModal}
-                            >
-                                Close
-                            </button>
-                        </div>
+                <div className="flex justify-between items-center px-4 py-3 border-t border-slate-200 bg-slate-50">
+                    <span className="text-sm text-slate-600">
+                        Page <strong>{pageIndex + 1}</strong> of <strong>{pageOptions.length}</strong>
+                    </span>
+                    <div className="flex gap-2">
+                        <Button variant="secondary" size="sm" onClick={previousPage} disabled={!canPreviousPage}>Previous</Button>
+                        <Button variant="secondary" size="sm" onClick={nextPage} disabled={!canNextPage}>Next</Button>
                     </div>
                 </div>
-            )}
+                </>
+                )}
+            </Card>
 
-
-        </div>
+            <Modal isOpen={isModalOpen && !!selectedTask} onClose={closeModal} title="Task Details" size="md">
+                {selectedTask && (
+                    <div className="space-y-4 -mt-2">
+                        <div className="grid grid-cols-2 gap-3">
+                            {[
+                                ["Task", selectedTask.task],
+                                ["Project", selectedTask.project],
+                                ["Employee", selectedTask.empId],
+                                ["Date", selectedTask.date],
+                                ["Timeline", selectedTask.timeline],
+                            ].map(([label, value]) => (
+                                <div key={label} className="bg-slate-50 rounded-lg p-3">
+                                    <p className="text-xs text-slate-500">{label}</p>
+                                    <p className="font-medium text-sm">{value || "—"}</p>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="bg-slate-50 rounded-lg p-3">
+                            <p className="text-xs text-slate-500">Description</p>
+                            <p className="text-sm mt-1">{selectedTask.description || "—"}</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-slate-500">Status:</span>
+                            <Badge status={selectedTask.status || "Pending"} />
+                        </div>
+                        {selectedTask.attachments && (
+                            <a href={selectedTask.attachments} target="_blank" rel="noopener noreferrer" className="text-primary text-sm hover:underline">
+                                View Attachment
+                            </a>
+                        )}
+                        <div className="flex justify-end gap-3 pt-2">
+                            {role === "Superadmin" && (
+                                <Button onClick={() => navigate(`/task-edit/${selectedTask._id}`)}>Edit</Button>
+                            )}
+                            <Button variant="secondary" onClick={closeModal}>Close</Button>
+                        </div>
+                    </div>
+                )}
+            </Modal>
+        </PageShell>
     );
 };
 

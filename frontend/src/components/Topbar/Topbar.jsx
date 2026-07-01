@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { projectServices } from "../../api/axios/axiosInstance";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   Menu, X, User, Search, ChevronDown,
   LayoutDashboard,
@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { FaPowerOff } from "react-icons/fa";
 import logo from "../../assets/logo light.png";
+import { normalizeRole, isAdminRole } from "../../utils/roles";
+import { Modal } from "../ui";
 
 const Topbar = () => {
   const [showProfile, setShowProfile] = useState(false);
@@ -26,6 +28,7 @@ const Topbar = () => {
   const searchInputRef = useRef(null);
   const [userProfile, setUserProfile] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const menuItems = [
     { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
@@ -72,7 +75,7 @@ const Topbar = () => {
   ];
 
   useEffect(() => {
-    const storedRole = localStorage.getItem("role") || "Superadmin";
+    const storedRole = normalizeRole(localStorage.getItem("role") || "");
     setRole(storedRole);
     const handleClickOutside = (event) => {
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
@@ -82,8 +85,7 @@ const Topbar = () => {
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-
-  }, []);
+  }, [location.pathname]);
   useEffect(() => {
     if (showSearch && searchInputRef.current) {
       searchInputRef.current.focus();
@@ -122,12 +124,26 @@ const Topbar = () => {
     }
   };
 
+  const isActivePath = (path) =>
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
+
+  const isSubMenuActive = (subItems) =>
+    subItems.some((sub) => isActivePath(sub.path));
+
+  const getInitials = (name) => {
+    if (!name) return "?";
+    return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  };
+
   const renderMenuItem = (item, isMobile = false) => {
     const ItemIcon = item.icon;
 
     if (item.subMenu) {
-      const visibleSubItems = item.subMenu.filter(subItem => !subItem.roles || subItem.roles.includes(role));
+      const visibleSubItems = item.subMenu.filter(
+        (subItem) => !subItem.roles || subItem.roles.map(normalizeRole).includes(role)
+      );
       if (visibleSubItems.length === 0) return null;
+      const subActive = isSubMenuActive(visibleSubItems);
 
       return (
         <div key={item.label} className={`relative ${isMobile ? 'w-full' : ''}`}>
@@ -136,8 +152,8 @@ const Topbar = () => {
             className={`
               flex items-center justify-between cursor-pointer
               ${isMobile
-                ? 'px-4 py-3 text-gray-100 hover:bg-blue-700 w-full'
-                : 'text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium'
+                ? `px-4 py-3 w-full ${subActive ? 'bg-blue-800 text-white' : 'text-gray-100 hover:bg-blue-700'}`
+                : `px-3 py-2 rounded-md text-sm font-medium ${subActive ? 'bg-blue-700 text-white' : 'text-white hover:text-gray-200'}`
               }
             `}
           >
@@ -161,10 +177,10 @@ const Topbar = () => {
                   to={subItem.path}
                   onClick={() => isMobile && setIsMobileMenuOpen(false)}
                   className={`
-                    block px-4 py-2
+                    block px-4 py-2 text-sm
                     ${isMobile
-                      ? 'text-gray-100 hover:bg-blue-800'
-                      : 'text-gray-800 hover:bg-gray-100'
+                      ? isActivePath(subItem.path) ? 'bg-blue-800 text-white' : 'text-gray-100 hover:bg-blue-800'
+                      : isActivePath(subItem.path) ? 'bg-primary-light text-primary-dark font-medium' : 'text-gray-800 hover:bg-gray-100'
                     }
                   `}
                 >
@@ -177,7 +193,9 @@ const Topbar = () => {
       );
     }
 
-    if (item.roles && !item.roles.includes(role)) return null;
+    if (item.roles && !item.roles.map(normalizeRole).includes(role)) return null;
+
+    const active = isActivePath(item.path);
 
     return (
       <Link
@@ -187,8 +205,8 @@ const Topbar = () => {
         className={`
           flex items-center
           ${isMobile
-            ? 'px-4 py-3 text-gray-100 hover:bg-blue-700 w-full'
-            : 'text-white hover:text-gray-200 px-3 py-2 rounded-md text-sm font-medium'
+            ? `px-4 py-3 w-full ${active ? 'bg-blue-800 text-white' : 'text-gray-100 hover:bg-blue-700'}`
+            : `px-3 py-2 rounded-md text-sm font-medium ${active ? 'bg-blue-700 text-white' : 'text-white hover:text-gray-200'}`
           }
         `}
       >
@@ -198,7 +216,7 @@ const Topbar = () => {
     );
   };
 
-  if (role !== "Superadmin" && window.innerWidth <= 768) {
+  if (!isAdminRole(role) && role !== "Superadmin" && window.innerWidth <= 768) {
     return (
       <div className="fixed inset-0 bg-gray-800 text-white flex items-center justify-center p-4">
         <div className="text-center max-w-sm">
@@ -303,21 +321,41 @@ const Topbar = () => {
           </div>
         )}
       </nav>
-      {showProfile && userProfile ? (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96 relative">
-            <button className="absolute top-2 right-2" onClick={toggleProfile}>
-              <X className="h-5 w-5 text-gray-600" />
-            </button>
-            <h2 className="text-black text-xl font-semibold mb-4">Profile Details</h2>
-            <p className="text-black"><strong>Role:</strong> {role}</p>
-            <p className="text-black"><strong>Name:</strong> {userProfile.name}</p>
-            <p className="text-black"><strong>Email:</strong> {userProfile.email}</p>
-            <p className="text-black"><strong>Password:</strong> {userProfile.password}</p>
-            <p className="text-black"><strong>empId:</strong> {userProfile.empId}</p>
+      {showProfile && userProfile && (
+        <Modal isOpen={showProfile} onClose={toggleProfile} title="Profile" size="sm">
+          <div className="flex flex-col items-center -mt-2">
+            <div className="w-20 h-20 rounded-full bg-primary-light flex items-center justify-center text-primary text-2xl font-semibold mb-4">
+              {getInitials(userProfile.name)}
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900">{userProfile.name}</h3>
+            <p className="text-sm text-slate-500 mb-6">{userProfile.email}</p>
+            <div className="w-full space-y-3">
+              <div className="flex justify-between py-2 border-b border-slate-100">
+                <span className="text-sm text-slate-500">Employee ID</span>
+                <span className="text-sm font-medium text-slate-900">{userProfile.empId}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-slate-100">
+                <span className="text-sm text-slate-500">Role</span>
+                <span className="text-sm font-medium text-slate-900 capitalize">
+                  {userProfile.role ? normalizeRole(userProfile.role) : role}
+                </span>
+              </div>
+              {userProfile.designation && (
+                <div className="flex justify-between py-2 border-b border-slate-100">
+                  <span className="text-sm text-slate-500">Designation</span>
+                  <span className="text-sm font-medium text-slate-900">{userProfile.designation}</span>
+                </div>
+              )}
+              {userProfile.department && (
+                <div className="flex justify-between py-2">
+                  <span className="text-sm text-slate-500">Department</span>
+                  <span className="text-sm font-medium text-slate-900">{userProfile.department}</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      ) : null}
+        </Modal>
+      )}
     </>
   );
 };

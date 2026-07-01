@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { FaPlus, FaFileDownload, FaFilter, FaUpload } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import { getAllLeads, deleteLead, bulkAssignLeads, importLeads, exportLeads, getAllEmployees } from '../../api/services/projectServices';
+import { normalizeRole, isAdminRole, isLeadRole, isTelecallerRole } from '../../utils/roles';
 import * as XLSX from 'xlsx';
 import { useTable, useGlobalFilter, useSortBy, usePagination } from 'react-table';
 
@@ -13,14 +14,15 @@ const LeadTable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ status: '', search: '', startDate: '', endDate: '' });
-  const [role] = useState(localStorage.getItem("role") || "Superadmin");
+  const [role] = useState(() => normalizeRole(localStorage.getItem("role") || ""));
   const [selected, setSelected] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [assignTo, setAssignTo] = useState('');
   const fileRef = useRef(null);
   const navigate = useNavigate();
 
-  const isAdmin = ['Admin', 'Superadmin', 'Lead'].includes(role);
+  const isAdmin = isAdminRole(role) || isLeadRole(role);
+  const isTelecaller = isTelecallerRole(role);
 
   const fetchLeads = async () => {
     try {
@@ -30,6 +32,7 @@ const LeadTable = () => {
       if (filters.search) params.search = filters.search;
       if (filters.startDate) params.startDate = filters.startDate;
       if (filters.endDate) params.endDate = filters.endDate;
+      if (isTelecaller) params.mine = 'true';
       const response = await getAllLeads(params);
       const data = Array.isArray(response.data)
         ? response.data
@@ -44,7 +47,9 @@ const LeadTable = () => {
 
   useEffect(() => { fetchLeads(); }, []);
   useEffect(() => {
-    if (isAdmin) getAllEmployees().then((r) => r.status === 200 && setEmployees(r.data));
+    if (isAdmin) {
+      getAllEmployees({ salesOnly: 'true' }).then((r) => r.status === 200 && setEmployees(r.data));
+    }
   }, [isAdmin]);
 
   const handleDelete = async (leadId) => {
@@ -161,7 +166,11 @@ const LeadTable = () => {
               <button onClick={handleExport} className="bg-green-500 text-white px-4 py-2 rounded flex items-center"><FaFileDownload className="mr-1" /> Export</button>
               <select value={assignTo} onChange={(e) => setAssignTo(e.target.value)} className="border p-2 rounded">
                 <option value="">Assign to...</option>
-                {employees.map((e) => <option key={e._id} value={e._id}>{e.name}</option>)}
+                {employees.map((e) => (
+                  <option key={e._id} value={e._id}>
+                    {e.name} ({normalizeRole(e.role) || 'No role'})
+                  </option>
+                ))}
               </select>
               <button onClick={handleBulkAssign} className="bg-orange-500 text-white px-4 py-2 rounded">Bulk Assign</button>
             </>

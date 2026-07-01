@@ -1,10 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; 
+import { Camera, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { projectServices } from '../../api/axios/axiosInstance';
+import { PageShell, Card, Button, useToast } from '../ui';
+
+const STEPS = ['Capture photo', 'Confirm', 'Submit'];
 
 const EmployeeAttendance = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const employeeId = localStorage.getItem("empId");
   const [photo, setPhoto] = useState(null);
   const [attendanceDetails] = useState({
@@ -25,6 +29,7 @@ const EmployeeAttendance = () => {
   const streamRef = useRef(null);
   const [isMounted, setIsMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
     setIsMounted(true);
     return () => {
@@ -35,105 +40,63 @@ const EmployeeAttendance = () => {
 
   const stopCamera = () => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => {
-        track.stop();
-      });
+      streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
-    
-    if (videoRef.current && videoRef.current.srcObject) {
+    if (videoRef.current?.srcObject) {
       videoRef.current.srcObject = null;
     }
-    
-    setCameraState(prev => ({
-      ...prev,
-      isActive: false,
-      isLoading: false
-    }));
+    setCameraState(prev => ({ ...prev, isActive: false, isLoading: false }));
   };
 
   const initializeCamera = async () => {
     if (cameraState.isLoading || cameraState.isActive || !isMounted) return;
     if (!videoRef.current) {
-      console.error("Video element not available");
-      setCameraState({
-        isActive: false,
-        isLoading: false,
-        error: "Camera not ready. Please try again."
-      });
+      setCameraState({ isActive: false, isLoading: false, error: "Camera not ready. Please try again." });
       return;
     }
-    
-    setCameraState({
-      isActive: false,
-      isLoading: true,
-      error: null
-    });
-    
+
+    setCameraState({ isActive: false, isLoading: true, error: null });
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'user',
-          width: { ideal: 640 },
-          height: { ideal: 480 }
-        } 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
       });
-      
       streamRef.current = stream;
-      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await new Promise((resolve) => {
-          videoRef.current.onloadedmetadata = resolve;
-        });
-        
-        setCameraState({
-          isActive: true,
-          isLoading: false,
-          error: null
-        });
+        await new Promise((resolve) => { videoRef.current.onloadedmetadata = resolve; });
+        setCameraState({ isActive: true, isLoading: false, error: null });
       }
     } catch (error) {
-      console.error("Camera initialization error:", error);
       stopCamera();
-      setCameraState({
-        isActive: false,
-        isLoading: false,
-        error: error.message || "Failed to access camera"
-      });
+      setCameraState({ isActive: false, isLoading: false, error: error.message || "Failed to access camera" });
     }
   };
+
   useEffect(() => {
-    if (isMounted && !photo && !submittedData) {
-      initializeCamera();
-    }
+    if (isMounted && !photo && !submittedData) initializeCamera();
   }, [isMounted, photo, submittedData]);
+
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        stopCamera();
-      } else if (isMounted && !photo && !submittedData && !cameraState.isActive && !cameraState.isLoading) {
+      if (document.hidden) stopCamera();
+      else if (isMounted && !photo && !submittedData && !cameraState.isActive && !cameraState.isLoading) {
         initializeCamera();
       }
     };
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [isMounted, photo, submittedData, cameraState.isActive, cameraState.isLoading]);
+
   const capturePhoto = () => {
     if (videoRef.current && canvasRef.current && cameraState.isActive) {
       const canvas = canvasRef.current;
       const context = canvas.getContext("2d");
-      const width = 320;
-      const height = 240;
-      
-      canvas.width = width;
-      canvas.height = height;
-      context.drawImage(videoRef.current, 0, 0, width, height);
-      const dataURL = canvas.toDataURL("image/jpeg", 0.7); 
-      setPhoto(dataURL);
+      canvas.width = 320;
+      canvas.height = 240;
+      context.drawImage(videoRef.current, 0, 0, 320, 240);
+      setPhoto(canvas.toDataURL("image/jpeg", 0.7));
       stopCamera();
     }
   };
@@ -143,156 +106,158 @@ const EmployeeAttendance = () => {
     initializeCamera();
   };
 
+  const currentStep = submittedData ? 3 : photo ? 2 : 1;
+
   const handleSubmit = async () => {
     if (!photo) {
-      alert("Please capture a photo before submitting.");
+      showToast("Please capture a photo before submitting.", "error");
       return;
     }
-    
+
     setIsSubmitting(true);
-  
     const currentDate = new Date();
-    const formattedDate = currentDate.toISOString().split('T')[0];
-    const formattedTime = currentDate.toLocaleTimeString();
-  
     const submissionData = {
       photo,
-      employeeId: employeeId || "Unknown", 
-      employeeName: attendanceDetails.employeeName || "Unknown", 
-      date: formattedDate, 
-      status: "Present", 
-      logintime: formattedTime,
+      employeeId: employeeId || "Unknown",
+      employeeName: attendanceDetails.employeeName || "Unknown",
+      date: currentDate.toISOString().split('T')[0],
+      status: "Present",
+      logintime: currentDate.toLocaleTimeString(),
     };
-  
+
     try {
       const response = await projectServices.post("/attendance/create", submissionData);
-  
       if (response.status === 200 || response.status === 201) {
-        const result = response.data;
-        alert("Attendance submitted successfully!");
-        setSubmittedData(result.attendance);
-        setTimeout(() => {
-          navigate('/attendance-table');
-        }, 1500);
+        showToast("Attendance submitted successfully!");
+        setSubmittedData(response.data.attendance);
+        setTimeout(() => navigate('/attendance-table'), 1500);
       } else {
-        alert(`Failed to submit attendance.`);
+        showToast("Failed to submit attendance.", "error");
       }
     } catch (error) {
       console.error("Error submitting attendance:", error);
-      alert("Error submitting attendance. Please try again or contact support.");
+      showToast("Error submitting attendance. Please try again.", "error");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="container mx-auto p-6 mt-20">
-      <h2 className="text-4xl font-bold mb-6">Employee Attendance</h2>
-
+    <PageShell
+      title="Mark Attendance"
+      description="Capture your photo to check in for today"
+    >
       {!submittedData && (
-        <div>
-          <div className="flex justify-center mb-6 space-x-4">
-            {!photo && cameraState.isActive && (
-              <button
-                onClick={capturePhoto}
-                className="bg-blue-500 text-white p-4 rounded-full flex items-center justify-center"
-              >
-                <Camera className="mr-2" size={20} />
-                Capture Photo
-              </button>
-            )}
-            {photo && (
-              <button
-                onClick={recapturePhoto}
-                className="bg-yellow-500 text-white p-4 rounded-full flex items-center justify-center"
-              >
-                <Camera className="mr-2" size={20} />
-                Recapture
-              </button>
-            )}
-            
-            {(cameraState.error || cameraState.isLoading) && (
-              <button
-                onClick={initializeCamera}
-                className="bg-red-500 text-white p-4 rounded-full flex items-center justify-center"
-              >
-                {cameraState.error ? "Retry Camera" : "Initializing..."}
-              </button>
-            )}
+        <div className="max-w-lg mx-auto">
+          <div className="flex items-center justify-center gap-2 mb-8">
+            {STEPS.map((label, i) => (
+              <React.Fragment key={label}>
+                <div className="flex flex-col items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    i + 1 <= currentStep ? 'bg-primary text-white' : 'bg-slate-200 text-slate-500'
+                  }`}>
+                    {i + 1}
+                  </div>
+                  <span className="text-xs text-slate-500 mt-1 hidden sm:block">{label}</span>
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div className={`h-0.5 w-12 ${i + 1 < currentStep ? 'bg-primary' : 'bg-slate-200'}`} />
+                )}
+              </React.Fragment>
+            ))}
           </div>
 
-          {cameraState.error && (
-            <div className="text-center p-4 text-red-500">
-              <p>Camera Error: {cameraState.error}</p>
-            </div>
-          )}
+          <Card className="p-6">
+            {cameraState.error && (
+              <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm text-center">
+                Camera Error: {cameraState.error}
+              </div>
+            )}
 
-          <div className="flex justify-center">
-            <video 
-              ref={videoRef} 
-              autoPlay 
-              playsInline
-              muted
-              className={`fullscreen-video ${!cameraState.isActive ? 'hidden' : ''}`}
-            ></video>
-          </div>
-          
-          {cameraState.isLoading && (
-            <div className="text-center p-4">
-              <p>Initializing camera...</p>
+            <div className="flex justify-center mb-6">
+              {!photo ? (
+                <div className="relative">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={`fullscreen-video w-72 h-56 ${!cameraState.isActive ? 'hidden' : ''}`}
+                  />
+                  {cameraState.isLoading && (
+                    <div className="w-72 h-56 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500">
+                      Initializing camera...
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <img src={photo} alt="Captured" className="w-48 h-48 rounded-full object-cover border-4 border-primary-light shadow-card" />
+              )}
             </div>
-          )}
-          
-          <canvas ref={canvasRef} className="hidden"></canvas>
-          
-          {photo && (
-            <div className="flex justify-center mt-6">
-              <img src={photo} alt="Captured" className="w-64 h-64 rounded-full object-cover shadow-lg" />
+
+            <canvas ref={canvasRef} className="hidden" />
+
+            <div className="flex flex-wrap justify-center gap-3">
+              {!photo && cameraState.isActive && (
+                <Button onClick={capturePhoto}>
+                  <Camera size={18} />
+                  Capture Photo
+                </Button>
+              )}
+              {photo && (
+                <>
+                  <Button variant="secondary" onClick={recapturePhoto}>
+                    <Camera size={18} />
+                    Recapture
+                  </Button>
+                  <Button onClick={handleSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? 'Submitting...' : 'Submit Attendance'}
+                  </Button>
+                </>
+              )}
+              {(cameraState.error || cameraState.isLoading) && !photo && (
+                <Button variant="danger" onClick={initializeCamera} disabled={cameraState.isLoading}>
+                  {cameraState.error ? 'Retry Camera' : 'Initializing...'}
+                </Button>
+              )}
             </div>
-          )}
-          
-          {photo && (
-            <div className="flex justify-center mt-6">
-              <button 
-                onClick={handleSubmit} 
-                disabled={isSubmitting}
-                className={`${isSubmitting ? 'bg-gray-400' : 'bg-green-500'} text-white p-4 rounded-md`}
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit Details'}
-              </button>
-            </div>
-          )}
+          </Card>
         </div>
       )}
 
       {submittedData && (
-        <div className="mt-6 p-6 border rounded-md">
-          <h3 className="text-2xl font-semibold">Submitted Attendance Details</h3>
-          <div className="flex justify-center mt-6">
-            <img
-              src={submittedData.photo}
-              alt="Captured"
-              className="w-64 h-64 rounded-full object-cover shadow-lg"
-            />
+        <Card className="max-w-md mx-auto p-8 text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
-          <ul className="mt-4">
-            <li><strong>Employee ID:</strong> {submittedData.employeeId}</li>
-            <li><strong>Name:</strong> {submittedData.employeeName}</li>
-            <li><strong>Date:</strong> {submittedData.date}</li>
-            <li><strong>Status:</strong> {submittedData.status}</li>
-            <li><strong>Login Time:</strong> {submittedData.logintime}</li>
-          </ul>
-          <div className="flex justify-center mt-6">
-            {/* <button 
-              onClick={() => navigate('/attendance-table')}
-              className="bg-blue-500 text-white p-4 rounded-md"
-            >
-              View Attendance Table
-            </button> */}
+          <h3 className="text-xl font-semibold text-slate-900 mb-2">Attendance Recorded</h3>
+          <p className="text-sm text-slate-500 mb-6">Redirecting to your attendance history...</p>
+          <img
+            src={submittedData.photo}
+            alt="Captured"
+            className="w-32 h-32 rounded-full object-cover mx-auto mb-4 border-4 border-green-100"
+          />
+          <div className="grid grid-cols-2 gap-3 text-sm text-left">
+            <div className="bg-slate-50 rounded-lg p-3">
+              <p className="text-slate-500">Employee ID</p>
+              <p className="font-medium">{submittedData.employeeId}</p>
+            </div>
+            <div className="bg-slate-50 rounded-lg p-3">
+              <p className="text-slate-500">Status</p>
+              <p className="font-medium text-green-600">{submittedData.status}</p>
+            </div>
+            <div className="bg-slate-50 rounded-lg p-3">
+              <p className="text-slate-500">Date</p>
+              <p className="font-medium">{submittedData.date}</p>
+            </div>
+            <div className="bg-slate-50 rounded-lg p-3">
+              <p className="text-slate-500">Login Time</p>
+              <p className="font-medium">{submittedData.logintime}</p>
+            </div>
           </div>
-        </div>
+        </Card>
       )}
-    </div>
+    </PageShell>
   );
 };
 

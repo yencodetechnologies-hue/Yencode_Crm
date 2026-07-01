@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { createLead, getCampaigns, getAllEmployees } from "../../api/services/projectServices";
+import { normalizeRole } from "../../utils/roles";
 
 const LEAD_STATUSES = [
   'New', 'Contacted', 'Follow-up', 'Interested', 'Not Interested',
@@ -20,7 +21,7 @@ const LeadForm = () => {
 
   React.useEffect(() => {
     getCampaigns().then((r) => r.status === 200 && setCampaigns(r.data));
-    getAllEmployees().then((r) => r.status === 200 && setEmployees(r.data));
+    getAllEmployees({ salesOnly: 'true' }).then((r) => r.status === 200 && setEmployees(r.data));
   }, []);
 
   const handleChange = (e) => {
@@ -95,7 +96,11 @@ const LeadForm = () => {
           <label className="block text-sm font-medium mb-1">Assigned To</label>
           <select name="assignedTo" value={lead.assignedTo} onChange={handleChange} className="border p-2 w-full rounded">
             <option value="">Unassigned</option>
-            {employees.map((e) => <option key={e._id} value={e._id}>{e.name}</option>)}
+            {employees.map((e) => (
+              <option key={e._id} value={e._id}>
+                {e.name} ({normalizeRole(e.role) || 'No role'})
+              </option>
+            ))}
           </select>
         </div>
         <div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { projectServices } from '../../api/axios/axiosInstance';
 import { useParams,useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import { normalizeRole } from "../../utils/roles";
 
 
 const EmployeeEdit = () => {
@@ -215,6 +216,7 @@ const EmployeeEdit = () => {
         setFormData((prevData) => ({
           ...prevData,
           ...employeeData,
+          role: normalizeRole(employeeData.role),
           dob: dobIso,
           dobFormatted,
           doj: dojIso,
