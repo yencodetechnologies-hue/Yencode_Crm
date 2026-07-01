@@ -8,17 +8,10 @@ export const projectServices = axios.create({
 
 projectServices.interceptors.request.use(
   (config) => {
- 
-    const adminToken = localStorage.getItem("accessToken");
-    const extractedToken = adminToken
-      ? JSON.parse(adminToken).accessToken
-      : null;
-
-    if (extractedToken) {
-
-      config.headers.Authorization = `Bearer ${extractedToken}`;
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
   (error) => {

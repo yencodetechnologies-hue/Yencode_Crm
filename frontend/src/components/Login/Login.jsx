@@ -23,6 +23,7 @@ const LoginPage = () => {
 
     localStorage.removeItem("empId");
     localStorage.removeItem("role");
+    localStorage.removeItem("accessToken");
     localStorage.removeItem("tokenExpiration");
   }, [location.state]);
 
@@ -97,18 +98,24 @@ const LoginPage = () => {
       const response = await verifyOTP({ email, otp });
 
       if (response.status === 200) {
-        const { _id, role } = response.data.employee || response.data.admin;
+        const userData = response.data.employee || response.data.admin;
+        const { _id, role } = userData;
         localStorage.setItem("empId", _id);
         localStorage.setItem("role", role);
+        if (response.data.accessToken) {
+          localStorage.setItem("accessToken", response.data.accessToken);
+        }
 
         const expirationTime = new Date().getTime() + 10 * 60 * 1000;
         localStorage.setItem("tokenExpiration", expirationTime.toString());
 
+        const telecallerRoles = ["Lead", "Telecaller", "TeamLeader", "Manager"];
+        const adminRoles = ["Superadmin", "Admin"];
         const from =
           location.state?.from ||
           (role === "employee"
             ? "/attendance-form"
-            : role === "Superadmin" || role === "Lead"
+            : adminRoles.includes(role) || telecallerRoles.includes(role)
             ? "/dashboard"
             : "/attendance-form");
 

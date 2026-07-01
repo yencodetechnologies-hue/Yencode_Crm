@@ -30,41 +30,45 @@ const Topbar = () => {
   const menuItems = [
     { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
     {
+      label: "CRM",
+      icon: MessageCircleQuestion,
+      subMenu: [
+        { label: "Leads", path: "/lead-table", roles: ["Superadmin", "Admin", "Lead", "Telecaller", "Manager", "TeamLeader"] },
+        { label: "Follow-ups", path: "/followups", roles: ["Superadmin", "Admin", "Lead", "Telecaller", "Manager", "TeamLeader"] },
+        { label: "Campaigns", path: "/campaigns", roles: ["Superadmin", "Admin", "Manager", "TeamLeader"] },
+        { label: "Reports", path: "/reports", roles: ["Superadmin", "Admin", "Manager", "TeamLeader"] },
+        { label: "Search Leads", path: "/search-leads", roles: ["Superadmin", "Admin", "Manager", "TeamLeader"] },
+      ],
+    },
+    {
       label: "Clients",
       icon: Briefcase,
       subMenu: [
-        { label: "Clients", path: "/client-table", roles: ["Superadmin"] },
-        { label: "Projects", path: "/project", roles: ["Superadmin", "employee"] },
-        { label: "Payments", path: "/payments-table", roles: ["Superadmin"] },
+        { label: "Clients", path: "/client-table", roles: ["Superadmin", "Admin"] },
+        { label: "Projects", path: "/project", roles: ["Superadmin", "Admin", "employee"] },
+        { label: "Payments", path: "/payments-table", roles: ["Superadmin", "Admin"] },
       ],
     },
     {
       label: "Employees",
       icon: Users,
       subMenu: [
-        { label: "Employee List", path: "/employee-table", roles: ["Superadmin"] },
-        { label: "Attendance", path: "/attendance-table", roles: ["Superadmin", "employee", "Lead"] },
-        { label: "Leaves", path: "/leave-table", roles: ["Superadmin", "employee", "Lead"] },
-        { label: "Adjustments", path: "/adjustment-table", roles: ["Superadmin"] },
-        { label: "Payroll", path: "/payroll-table", roles: ["Superadmin"] },
-        { label: "Search Leads", path: "/search-leads", roles: ["Superadmin"] },
+        { label: "Employee List", path: "/employee-table", roles: ["Superadmin", "Admin", "Manager", "TeamLeader"] },
+        { label: "Attendance", path: "/attendance-table", roles: ["Superadmin", "Admin", "employee", "Lead", "Telecaller", "Manager", "TeamLeader"] },
+        { label: "Leaves", path: "/leave-table", roles: ["Superadmin", "Admin", "employee", "Lead", "Telecaller", "Manager", "TeamLeader"] },
+        { label: "Adjustments", path: "/adjustment-table", roles: ["Superadmin", "Admin"] },
+        { label: "Payroll", path: "/payroll-table", roles: ["Superadmin", "Admin"] },
       ],
     },
     { label: "Tasks", path: "/task", icon: Clipboard },
     {
-      label: "Enquiries",
-      path: "/lead-table",
-      icon: MessageCircleQuestion,
-      roles: ["Superadmin", "Lead"],
-    },
-    {
       label: "Expenses",
       path: "/expense-table",
       icon: CreditCard,
-      roles: ["Superadmin"],
+      roles: ["Superadmin", "Admin"],
     },
     { label: "MoM", path: "/momdetails", icon: FileText },
-    { label: "Quotations", path: "/quotation-table", icon: FileText, roles: ["Superadmin"]},
+    { label: "Quotations", path: "/quotation-table", icon: FileText, roles: ["Superadmin", "Admin"]},
   ];
 
   useEffect(() => {

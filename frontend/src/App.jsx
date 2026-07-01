@@ -356,6 +356,19 @@ import QuotationTable from "./components/Quotations/Quotationstable";
 import QuotationEdit from "./components/Quotations/QuotationsEdit";
 import SearchResults from "./components/SearchResults/SearchResults";
 import SearchLeads from "./components/SearchLeads/SearchLeads";
+import CustomerProfile from "./components/CustomerProfile/CustomerProfile";
+import CallingPanel from "./components/Calling/CallingPanel";
+import FollowUpList from "./components/FollowUps/FollowUpList";
+import CampaignTable from "./components/Campaigns/CampaignTable";
+import Reports from "./components/Reports/Reports";
+
+const normalizeRole = (role) => {
+  const map = { Superadmin: 'Admin', Lead: 'Telecaller', employee: 'Telecaller' };
+  return map[role] || role;
+};
+
+const TELECALLER_ROLES = ['Lead', 'Telecaller'];
+const MANAGER_ROLES = ['Manager', 'TeamLeader'];
 
 const RouteTransition = ({ children }) => {
   return <>{children}</>;
@@ -385,6 +398,7 @@ const AdminLayout = ({ children, loading }) => {
     if ((!token || isExpired) && location.pathname !== "/login") {
       localStorage.removeItem("empId");
       localStorage.removeItem("role");
+      localStorage.removeItem("accessToken");
       localStorage.removeItem("tokenExpiration");
       
       navigate("/login", { 
@@ -459,6 +473,9 @@ const RoutesWithPreloader = ({ role }) => {
       '/project',
       '/client-table',
       '/lead-table',
+      '/followups',
+      '/campaigns',
+      '/reports',
       '/adjustment-table',
       '/payments-table',
       '/payroll-table',
@@ -496,6 +513,18 @@ const RoutesWithPreloader = ({ role }) => {
     '/search-results'
   ];
 
+  const telecallerRoutes = [
+    '/dashboard', '/lead-table', '/lead-form', '/lead-edit', '/lead/',
+    '/calling/', '/followups', '/attendance-table', '/attendance-form',
+    '/leave-table', '/leave', '/leave-edit', '/task', '/task-form', '/task-edit',
+    '/mom', '/momdetails', '/mom-edit', '/search-results',
+  ];
+
+  const managerRoutes = [
+    ...telecallerRoutes,
+    '/campaigns', '/reports', '/search-leads', '/employee-table',
+  ];
+
   const adminRoutes = [
     '/admin',
     '/dashboard',
@@ -519,6 +548,11 @@ const RoutesWithPreloader = ({ role }) => {
     '/lead-form',
     '/lead-table',
     '/lead-edit',
+    '/lead/',
+    '/calling/',
+    '/followups',
+    '/campaigns',
+    '/reports',
     '/adjustment-form',
     '/adjustment-table',
     '/adjustment-edit',
@@ -541,12 +575,45 @@ const RoutesWithPreloader = ({ role }) => {
   ];
 
   const isValidPath = (path) => {
+    const nr = normalizeRole(role);
     if (role === "employee") {
       return employeeRoutes.some(route => path.startsWith(route));
-    } else {
-      return adminRoutes.some(route => path.startsWith(route));
     }
+    if (TELECALLER_ROLES.includes(role) || nr === 'Telecaller') {
+      return telecallerRoutes.some(route => path.startsWith(route));
+    }
+    if (MANAGER_ROLES.includes(role) || nr === 'Manager' || nr === 'TeamLeader') {
+      return managerRoutes.some(route => path.startsWith(route));
+    }
+    return adminRoutes.some(route => path.startsWith(route));
   };
+
+  const isTelecallerOnly = TELECALLER_ROLES.includes(role) || normalizeRole(role) === 'Telecaller';
+  const isManager = MANAGER_ROLES.includes(role) || ['Manager', 'TeamLeader'].includes(normalizeRole(role));
+
+  const telecallerRouteElements = (
+    <>
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/lead-table" element={<LeadTable />} />
+      <Route path="/lead-form" element={<LeadForm />} />
+      <Route path="/lead-edit/:id" element={<LeadEdit />} />
+      <Route path="/lead/:id" element={<CustomerProfile />} />
+      <Route path="/calling/:leadId" element={<CallingPanel />} />
+      <Route path="/followups" element={<FollowUpList />} />
+      <Route path="/attendance-table" element={<AttendanceTable />} />
+      <Route path="/attendance-form" element={<EmployeeAttendance />} />
+      <Route path="/leave-table" element={<LeaveTable />} />
+      <Route path="/leave" element={<Leave />} />
+      <Route path="/leave-edit/:id" element={<LeaveEdit />} />
+      <Route path="/task" element={<TaskList />} />
+      <Route path="/task-form" element={<TaskForm />} />
+      <Route path="/task-edit/:taskId" element={<TaskEdit />} />
+      <Route path="/mom" element={<MoM />} />
+      <Route path="/momdetails" element={<BlogPage />} />
+      <Route path="/mom-edit/:id" element={<MoMEdit />} />
+      <Route path="/search-results" element={<SearchResults />} />
+    </>
+  );
 
   return (
     <>
@@ -583,6 +650,32 @@ const RoutesWithPreloader = ({ role }) => {
                   </Routes>
                 </AdminLayout>
               )
+            ) : isTelecallerOnly ? (
+              !isValidPath(location.pathname) ? (
+                <Navigate to="/login" replace />
+              ) : (
+                <AdminLayout loading={loading}>
+                  <Routes>
+                    {telecallerRouteElements}
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  </Routes>
+                </AdminLayout>
+              )
+            ) : isManager ? (
+              !isValidPath(location.pathname) ? (
+                <Navigate to="/login" replace />
+              ) : (
+                <AdminLayout loading={loading}>
+                  <Routes>
+                    {telecallerRouteElements}
+                    <Route path="/campaigns" element={<CampaignTable />} />
+                    <Route path="/reports" element={<Reports />} />
+                    <Route path="/search-leads" element={<SearchLeads />} />
+                    <Route path="/employee-table" element={<EmployeeTable />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  </Routes>
+                </AdminLayout>
+              )
             ) : (
               !isValidPath(location.pathname) ? (
                 <Navigate to="/login" replace />
@@ -611,6 +704,11 @@ const RoutesWithPreloader = ({ role }) => {
                     <Route path="/lead-form" element={<LeadForm />} />
                     <Route path="/lead-table" element={<LeadTable />} />
                     <Route path="/lead-edit/:id" element={<LeadEdit />} />
+                    <Route path="/lead/:id" element={<CustomerProfile />} />
+                    <Route path="/calling/:leadId" element={<CallingPanel />} />
+                    <Route path="/followups" element={<FollowUpList />} />
+                    <Route path="/campaigns" element={<CampaignTable />} />
+                    <Route path="/reports" element={<Reports />} />
                     <Route path="/search-leads" element={<SearchLeads/>} />
                     <Route path="/adjustment-form" element={<Adjustment />} />
                     <Route path="/adjustment-table" element={<AdjustmentTable />} />

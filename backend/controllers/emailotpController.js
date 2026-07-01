@@ -4,6 +4,7 @@ const Admin = require("../models/superadminModel");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const sendEmail = require("../utils/sendEmail");
+const { generateToken } = require("../utils/jwt");
 require("dotenv").config();
 
 // In-memory store for OTPs (in production, use Redis or database)
@@ -182,8 +183,16 @@ const verifyOTP = async (req, res) => {
     otpStore.delete(email);
 
     const payload = empData
-      ? { message: "Employee login successful", employee: empData }
-      : { message: "Admin login successful", admin: adminData };
+      ? {
+          message: "Employee login successful",
+          employee: empData,
+          accessToken: generateToken(empData, 'employee'),
+        }
+      : {
+          message: "Admin login successful",
+          admin: adminData,
+          accessToken: generateToken(adminData, 'admin'),
+        };
 
     return res.status(200).json(payload);
   } catch (err) {

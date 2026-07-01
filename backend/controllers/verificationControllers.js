@@ -1,6 +1,7 @@
 const employeeSchema = require("../models/employeeSchema");
 const superadminSchema = require("../models/superadminModel");
 const bcrypt = require("bcrypt");
+const { generateToken } = require("../utils/jwt");
 
 const employeeLogin = async (req, res) => {
     try {
@@ -39,9 +40,11 @@ const employeeLogin = async (req, res) => {
         }
 
         console.log("Employee login successful:", empData.email);
+        const accessToken = generateToken(empData, 'employee');
         return res.status(200).json({
             message: "Employee login successful",
             employee: empData,
+            accessToken,
         });
     } catch (err) {
         console.log("Error in employee login verification", err);
@@ -81,9 +84,11 @@ const superadminLogin = async (req, res) => {
         }
 
         console.log("Superadmin login successful:", superadminData.officeEmail);
+        const accessToken = generateToken(superadminData, 'admin');
         return res.status(200).json({
             message: "Superadmin login successful",
             superadmin: superadminData,
+            accessToken,
         });
     } catch (err) {
         console.log("Error in superadmin login verification", err);

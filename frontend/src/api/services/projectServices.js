@@ -661,12 +661,287 @@ export const updateClientStatus = async (id, status) => {
     }
 };
 
-export const getAllLeads = async () => {
+export const getAllLeads = async (params = {}) => {
     try {
-        const response = await projectServices.get('/leads/get-all');
+        const response = await projectServices.get('/leads/get-all', { params });
         return response;
     } catch (err) {
         return err;
+    }
+};
+
+export const getLeadById = async (id) => {
+    try {
+        const response = await projectServices.get(`/leads/getlead/${id}`);
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const updateLead = async (id, data) => {
+    try {
+        const response = await projectServices.put(`/leads/update/${id}`, data);
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const bulkAssignLeads = async (leadIds, assignedTo) => {
+    try {
+        const response = await projectServices.put('/leads/bulk-assign', { leadIds, assignedTo });
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const importLeads = async (leads) => {
+    try {
+        const response = await projectServices.post('/leads/import', { leads });
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const exportLeads = async (params = {}) => {
+    try {
+        const response = await projectServices.get('/leads/export', { params });
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+// --- Calls ---
+export const createCall = async (data) => {
+    try {
+        const response = await projectServices.post('/calls', data);
+        return response;
+    } catch (err) {
+        throw err;
+    }
+};
+
+export const getCallsByLead = async (leadId) => {
+    try {
+        const response = await projectServices.get(`/calls/lead/${leadId}`);
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const getTodayCalls = async () => {
+    try {
+        const response = await projectServices.get('/calls/today');
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+// --- Follow-ups ---
+export const getFollowUps = async (params = {}) => {
+    try {
+        const response = await projectServices.get('/followups', { params });
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const getTodayFollowUps = async () => {
+    try {
+        const response = await projectServices.get('/followups/today');
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const getCalendarFollowUps = async (year, month) => {
+    try {
+        const response = await projectServices.get('/followups/calendar', { params: { year, month } });
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const createFollowUp = async (data) => {
+    try {
+        const response = await projectServices.post('/followups', data);
+        return response;
+    } catch (err) {
+        throw err;
+    }
+};
+
+export const completeFollowUp = async (id) => {
+    try {
+        const response = await projectServices.patch(`/followups/${id}/complete`);
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const deleteFollowUp = async (id) => {
+    try {
+        const response = await projectServices.delete(`/followups/${id}`);
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+// --- Campaigns ---
+export const getCampaigns = async () => {
+    try {
+        const response = await projectServices.get('/campaigns');
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const createCampaign = async (data) => {
+    try {
+        const response = await projectServices.post('/campaigns', data);
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const updateCampaign = async (id, data) => {
+    try {
+        const response = await projectServices.put(`/campaigns/${id}`, data);
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const deleteCampaign = async (id) => {
+    try {
+        const response = await projectServices.delete(`/campaigns/${id}`);
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const getCampaignStats = async (id) => {
+    try {
+        const response = await projectServices.get(`/campaigns/${id}/stats`);
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const assignCampaignAgents = async (id, agentIds) => {
+    try {
+        const response = await projectServices.post(`/campaigns/${id}/assign-agents`, { agentIds });
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+// --- Dashboard & Reports ---
+export const getDashboardMetrics = async () => {
+    try {
+        const response = await projectServices.get('/dashboard/metrics');
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const getDailyCallReport = async (params) => {
+    try {
+        const response = await projectServices.get('/reports/daily-calls', { params });
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const getLeadConversionReport = async (params) => {
+    try {
+        const response = await projectServices.get('/reports/lead-conversion', { params });
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const getFollowUpReport = async (params) => {
+    try {
+        const response = await projectServices.get('/reports/follow-ups', { params });
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const getMissedCallsReport = async (params) => {
+    try {
+        const response = await projectServices.get('/reports/missed-calls', { params });
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const getCampaignPerformanceReport = async () => {
+    try {
+        const response = await projectServices.get('/reports/campaign-performance');
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const getAgentPerformanceReport = async (params) => {
+    try {
+        const response = await projectServices.get('/reports/agent-performance', { params });
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const getRevenueReport = async (params) => {
+    try {
+        const response = await projectServices.get('/reports/revenue', { params });
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+// --- Activities ---
+export const getActivitiesByLead = async (leadId) => {
+    try {
+        const response = await projectServices.get(`/activities/lead/${leadId}`);
+        return response;
+    } catch (err) {
+        return err;
+    }
+};
+
+export const createNote = async (leadId, description) => {
+    try {
+        const response = await projectServices.post('/activities/note', { leadId, description });
+        return response;
+    } catch (err) {
+        throw err;
     }
 };
 

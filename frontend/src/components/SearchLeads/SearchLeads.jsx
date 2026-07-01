@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import gmbCategories from '../../components/GmbCategoriesData';
 import { searchPlaces, getPlaceDetails } from "../../api/services/projectServices";
 
@@ -72,7 +73,12 @@ function SearchLeads() {
             const { latitude, longitude, radius, type } = searchData;
             const encodedType = encodeURIComponent(type.replace(/\s+/g, '_').toLowerCase());
 
-            const response = await searchPlaces(latitude, longitude, radius, encodedType);
+            const response = await searchPlaces({
+                lat: latitude,
+                lng: longitude,
+                radius: radius * 1000,
+                type: encodedType,
+            });
             const data = response.data;
             console.log('API Response Data:', data);
 
