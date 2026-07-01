@@ -18,6 +18,10 @@ const normalizeRole = (role) => {
 
 const generateToken = (user, userType = 'employee') => {
   const role = normalizeRole(user.role || (userType === 'admin' ? 'Admin' : 'Telecaller'));
+  const salesRoles = ['Telecaller', 'TeamLeader'];
+  const expiresIn = salesRoles.includes(role)
+    ? (process.env.JWT_SALES_EXPIRES_IN || '12h')
+    : JWT_EXPIRES_IN;
   const payload = {
     id: user._id.toString(),
     empId: user.empId || null,
@@ -25,7 +29,7 @@ const generateToken = (user, userType = 'employee') => {
     userType,
     email: user.email || user.officeEmail,
   };
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn });
 };
 
 module.exports = { generateToken, normalizeRole, JWT_SECRET };

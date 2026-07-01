@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import loginImage from "../../assets/logo.png";
 import { sendOTP, verifyOTP } from "../../api/services/projectServices";
+import { refreshSession } from "../../utils/session";
 import { AlertCircle, Loader, Copy, Check } from "lucide-react";
 
 const LoginPage = () => {
@@ -105,9 +106,7 @@ const LoginPage = () => {
         if (response.data.accessToken) {
           localStorage.setItem("accessToken", response.data.accessToken);
         }
-
-        const expirationTime = new Date().getTime() + 10 * 60 * 1000;
-        localStorage.setItem("tokenExpiration", expirationTime.toString());
+        refreshSession();
 
         const telecallerRoles = ["Lead", "Telecaller", "TeamLeader", "Manager"];
         const adminRoles = ["Superadmin", "Admin"];

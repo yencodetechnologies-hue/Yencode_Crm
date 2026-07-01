@@ -361,6 +361,7 @@ import CallingPanel from "./components/Calling/CallingPanel";
 import FollowUpList from "./components/FollowUps/FollowUpList";
 import CampaignTable from "./components/Campaigns/CampaignTable";
 import Reports from "./components/Reports/Reports";
+import { refreshSession, isSessionExpired } from "./utils/session";
 
 const normalizeRole = (role) => {
   const map = { Superadmin: 'Admin', Lead: 'Telecaller', employee: 'Telecaller' };
@@ -373,18 +374,6 @@ const MANAGER_ROLES = ['Manager', 'TeamLeader'];
 const RouteTransition = ({ children }) => {
   return <>{children}</>;
 };
-// Add these utility functions at the top of App.jsx
-const refreshSession = () => {
-  const expirationTime = new Date().getTime() + 10 * 60 * 1000;
-  localStorage.setItem("tokenExpiration", expirationTime.toString());
-};
-
-const checkTokenExpiration = () => {
-  const expirationTime = localStorage.getItem("tokenExpiration");
-  if (!expirationTime) return true;
-  return new Date().getTime() > parseInt(expirationTime, 10);
-};
-
 
 const AdminLayout = ({ children, loading }) => {
   const navigate = useNavigate();
@@ -393,7 +382,7 @@ const AdminLayout = ({ children, loading }) => {
   // Check auth status
   const checkAuth = () => {
     const token = localStorage.getItem("empId");
-    const isExpired = checkTokenExpiration();
+    const isExpired = isSessionExpired();
     
     if ((!token || isExpired) && location.pathname !== "/login") {
       localStorage.removeItem("empId");
