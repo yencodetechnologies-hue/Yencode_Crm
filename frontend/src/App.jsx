@@ -439,16 +439,15 @@ const AdminLayout = ({ children, loading }) => {
 };
 
 function App() {
-  const role = localStorage.getItem("role");
-
   return (
     <Router>
-      <RoutesWithPreloader role={role} />
+      <RoutesWithPreloader />
     </Router>
   );
 }
 
-const RoutesWithPreloader = ({ role }) => {
+const RoutesWithPreloader = () => {
+  const role = localStorage.getItem("role") || "";
   const location = useLocation();
   const [loading, setLoading] = useState(true); 
 

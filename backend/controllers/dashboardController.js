@@ -17,10 +17,16 @@ const getTodayRange = () => {
 exports.getDashboardMetrics = async (req, res) => {
   try {
     const { start, end } = getTodayRange();
-    const role = normalizeRole(req.user?.role);
-    const leadFilter = role === 'Telecaller' ? { assignedTo: req.user.id } : {};
-    const callFilter = role === 'Telecaller' ? { agentId: req.user.id } : {};
-    const fuFilter = role === 'Telecaller' ? { agentId: req.user.id } : {};
+    const role = req.user ? normalizeRole(req.user.role) : null;
+    const leadFilter = {};
+    const callFilter = {};
+    const fuFilter = {};
+
+    if (req.query.scope === 'mine' && role === 'Telecaller' && req.user?.id) {
+      leadFilter.assignedTo = req.user.id;
+      callFilter.agentId = req.user.id;
+      fuFilter.agentId = req.user.id;
+    }
 
     const [
       totalLeads,

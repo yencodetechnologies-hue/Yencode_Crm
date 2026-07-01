@@ -30,7 +30,12 @@ projectServices.interceptors.response.use(
       console.log("Error in Axios interceptor response", error);
       const { status } = error.response;
       if (status === 401) {
+        // Only clear token when server rejects it; optional-auth APIs still work without one
+        const hadToken = !!localStorage.getItem("accessToken");
         localStorage.removeItem("accessToken");
+        if (hadToken && !window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
       } else {
         console.log("Error:", error.response.data);
       }

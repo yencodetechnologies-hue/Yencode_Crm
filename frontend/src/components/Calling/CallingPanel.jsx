@@ -43,6 +43,7 @@ const CallingPanel = () => {
     try {
       await createCall({
         leadId,
+        agentId: localStorage.getItem('empId'),
         outcome,
         notes,
         duration: timer,
@@ -50,7 +51,7 @@ const CallingPanel = () => {
         endedAt: new Date(),
       });
       if (followUp.date) {
-        await createFollowUp({ leadId, date: followUp.date, time: followUp.time, notes, priority: 'Medium' });
+        await createFollowUp({ leadId, agentId: localStorage.getItem('empId'), date: followUp.date, time: followUp.time, notes, priority: 'Medium' });
       }
       alert('Call saved');
       navigate(`/lead/${leadId}`);

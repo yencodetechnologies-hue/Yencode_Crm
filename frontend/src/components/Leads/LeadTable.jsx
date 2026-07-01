@@ -31,8 +31,10 @@ const LeadTable = () => {
       if (filters.startDate) params.startDate = filters.startDate;
       if (filters.endDate) params.endDate = filters.endDate;
       const response = await getAllLeads(params);
-      const data = response.data?.leads || response.data || [];
-      setLeads(Array.isArray(data) ? data : []);
+      const data = Array.isArray(response.data)
+        ? response.data
+        : response.data?.leads || [];
+      setLeads(data);
     } catch (err) {
       setError('Failed to load leads');
     } finally {
@@ -47,8 +49,14 @@ const LeadTable = () => {
 
   const handleDelete = async (leadId) => {
     if (!window.confirm('Delete this lead?')) return;
-    const response = await deleteLead(leadId);
-    if (response.status === 200) setLeads((prev) => prev.filter((l) => l._id !== leadId));
+    try {
+      const response = await deleteLead(leadId);
+      if (response?.status === 200) {
+        setLeads((prev) => prev.filter((l) => l._id !== leadId));
+      }
+    } catch (err) {
+      console.error('Delete failed:', err);
+    }
   };
 
   const handleBulkAssign = async () => {

@@ -50,7 +50,7 @@ const FollowUpList = () => {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await createFollowUp(form);
+      await createFollowUp({ ...form, agentId: localStorage.getItem('empId') });
       setShowForm(false);
       setForm({ leadId: '', date: '', time: '', notes: '', priority: 'Medium' });
       load();

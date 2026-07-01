@@ -18,11 +18,9 @@ export const refreshSession = () => {
 
 export const isSessionExpired = () => {
   const empId = localStorage.getItem('empId');
-  const accessToken = localStorage.getItem('accessToken');
+  if (!empId) return true;
+
   const expirationTime = localStorage.getItem('tokenExpiration');
-
-  if (!empId || !accessToken) return true;
-
   if (!expirationTime) {
     refreshSession();
     return false;

@@ -14,11 +14,11 @@ const outcomeToStatus = {
 
 exports.createCall = async (req, res) => {
   try {
-    const { leadId, outcome, duration, notes, startedAt, endedAt, recordingUrl } = req.body;
-    const agentId = req.user?.id;
+    const { leadId, outcome, duration, notes, startedAt, endedAt, recordingUrl, agentId: bodyAgentId } = req.body;
+    const agentId = req.user?.id || bodyAgentId;
 
-    if (!leadId || !outcome) {
-      return res.status(400).json({ message: 'leadId and outcome are required' });
+    if (!leadId || !outcome || !agentId) {
+      return res.status(400).json({ message: 'leadId, outcome, and agentId are required' });
     }
 
     const lead = await Lead.findById(leadId);
@@ -86,8 +86,8 @@ exports.getTodayCalls = async (req, res) => {
     end.setHours(23, 59, 59, 999);
 
     const filter = { createdAt: { $gte: start, $lte: end } };
-    const role = normalizeRole(req.user?.role);
-    if (role === 'Telecaller') {
+    const role = req.user ? normalizeRole(req.user.role) : null;
+    if (req.query.mine === 'true' && role === 'Telecaller' && req.user?.id) {
       filter.agentId = req.user.id;
     }
 

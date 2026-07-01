@@ -100,7 +100,8 @@ const LoginPage = () => {
 
       if (response.status === 200) {
         const userData = response.data.employee || response.data.admin;
-        const { _id, role } = userData;
+        const { _id } = userData;
+        const role = userData.role || userData.adminType || (response.data.admin ? 'Superadmin' : 'employee');
         localStorage.setItem("empId", _id);
         localStorage.setItem("role", role);
         if (response.data.accessToken) {

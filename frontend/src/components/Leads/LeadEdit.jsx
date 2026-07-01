@@ -59,6 +59,7 @@ const LeadEdit = () => {
       const startedAt = new Date(Date.now() - timer * 1000);
       await createCall({
         leadId: id,
+        agentId: localStorage.getItem('empId'),
         outcome: callForm.outcome,
         notes: callForm.notes,
         duration: timer,
@@ -69,6 +70,7 @@ const LeadEdit = () => {
       if (scheduleFollowUp && followUpDate) {
         await createFollowUp({
           leadId: id,
+          agentId: localStorage.getItem('empId'),
           date: followUpDate,
           time: followUpTime,
           notes: callForm.notes,

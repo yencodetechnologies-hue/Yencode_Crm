@@ -8,6 +8,9 @@ exports.createFollowUp = async (req, res) => {
       ...req.body,
       agentId: req.body.agentId || req.user?.id,
     });
+    if (!followUp.agentId) {
+      return res.status(400).json({ message: 'agentId is required' });
+    }
     await followUp.save();
 
     await logActivity({
@@ -27,8 +30,10 @@ exports.createFollowUp = async (req, res) => {
 exports.getFollowUps = async (req, res) => {
   try {
     const filter = {};
-    const role = normalizeRole(req.user?.role);
-    if (role === 'Telecaller') filter.agentId = req.user.id;
+    const role = req.user ? normalizeRole(req.user.role) : null;
+    if (req.query.mine === 'true' && role === 'Telecaller' && req.user?.id) {
+      filter.agentId = req.user.id;
+    }
     if (req.query.agentId) filter.agentId = req.query.agentId;
     if (req.query.status) filter.status = req.query.status;
     if (req.query.leadId) filter.leadId = req.query.leadId;
@@ -51,8 +56,10 @@ exports.getTodayFollowUps = async (req, res) => {
     end.setHours(23, 59, 59, 999);
 
     const filter = { date: { $gte: start, $lte: end }, status: 'Pending' };
-    const role = normalizeRole(req.user?.role);
-    if (role === 'Telecaller') filter.agentId = req.user.id;
+    const role = req.user ? normalizeRole(req.user.role) : null;
+    if (req.query.mine === 'true' && role === 'Telecaller' && req.user?.id) {
+      filter.agentId = req.user.id;
+    }
 
     const followUps = await FollowUp.find(filter)
       .populate('leadId', 'name contact leadId')
@@ -73,8 +80,10 @@ exports.getCalendarFollowUps = async (req, res) => {
     const end = new Date(y, m, 0, 23, 59, 59, 999);
 
     const filter = { date: { $gte: start, $lte: end } };
-    const role = normalizeRole(req.user?.role);
-    if (role === 'Telecaller') filter.agentId = req.user.id;
+    const role = req.user ? normalizeRole(req.user.role) : null;
+    if (req.query.mine === 'true' && role === 'Telecaller' && req.user?.id) {
+      filter.agentId = req.user.id;
+    }
 
     const followUps = await FollowUp.find(filter)
       .populate('leadId', 'name contact leadId')

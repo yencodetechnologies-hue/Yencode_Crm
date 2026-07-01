@@ -14,7 +14,8 @@ const buildLeadQuery = (query, user) => {
   if (query.priority) filter.priority = query.priority;
   if (query.assignedTo) filter.assignedTo = query.assignedTo;
 
-  if (role === 'Telecaller' && user?.id) {
+  // Only filter to agent's own leads when explicitly requested
+  if (query.mine === 'true' && role === 'Telecaller' && user?.id) {
     filter.assignedTo = user.id;
   }
 
@@ -44,16 +45,23 @@ const buildLeadQuery = (query, user) => {
 
 exports.createLead = async (req, res) => {
   try {
-    const duplicate = await isDuplicate({
-      contact: req.body.contact,
-      alternateContact: req.body.alternateContact,
-      email: req.body.email,
-    });
-    if (duplicate) {
-      return res.status(409).json({ message: 'Duplicate lead detected', duplicate: true });
+    if (req.body.contact) {
+      const duplicate = await isDuplicate({
+        contact: req.body.contact,
+        alternateContact: req.body.alternateContact,
+        email: req.body.email,
+      });
+      if (duplicate) {
+        return res.status(409).json({ message: 'Duplicate lead detected', duplicate: true });
+      }
     }
 
-    const leadId = await generateLeadId();
+    let leadId;
+    try {
+      leadId = await generateLeadId();
+    } catch {
+      leadId = `LD-${Date.now()}`;
+    }
     const newLead = new Lead({
       ...req.body,
       leadId,
@@ -78,22 +86,31 @@ exports.createLead = async (req, res) => {
 
 exports.getAllLeads = async (req, res) => {
   try {
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 50;
-    const skip = (page - 1) * limit;
     const filter = buildLeadQuery(req.query, req.user);
+    const page = parseInt(req.query.page, 10);
+    const limit = parseInt(req.query.limit, 10);
+    const usePagination = Number.isFinite(page) || Number.isFinite(limit);
+
+    const query = Lead.find(filter)
+      .populate('assignedTo', 'name empId email')
+      .populate('campaign', 'name')
+      .sort({ createdAt: -1 });
+
+    if (!usePagination) {
+      const leads = await query;
+      return res.json(leads);
+    }
+
+    const pageNum = page || 1;
+    const limitNum = limit || 50;
+    const skip = (pageNum - 1) * limitNum;
 
     const [leads, total] = await Promise.all([
-      Lead.find(filter)
-        .populate('assignedTo', 'name empId email')
-        .populate('campaign', 'name')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit),
+      query.skip(skip).limit(limitNum),
       Lead.countDocuments(filter),
     ]);
 
-    res.json({ leads, total, page, pages: Math.ceil(total / limit) });
+    res.json({ leads, total, page: pageNum, pages: Math.ceil(total / limitNum) });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching leads', error: error.message });
   }

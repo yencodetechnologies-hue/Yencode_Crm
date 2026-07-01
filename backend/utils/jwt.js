@@ -17,7 +17,9 @@ const normalizeRole = (role) => {
 };
 
 const generateToken = (user, userType = 'employee') => {
-  const role = normalizeRole(user.role || (userType === 'admin' ? 'Admin' : 'Telecaller'));
+  const role = normalizeRole(
+    user.role || user.adminType || (userType === 'admin' ? 'Superadmin' : 'Telecaller')
+  );
   const salesRoles = ['Telecaller', 'TeamLeader'];
   const expiresIn = salesRoles.includes(role)
     ? (process.env.JWT_SALES_EXPIRES_IN || '12h')
