@@ -360,8 +360,9 @@ const EmployeeForm = () => {
               >
                 <option value="">Select Role</option>
                 <option value="employee">Employee</option>
-                <option value="Superadmin">Superadmin</option>
+                <option value="Telecaller">Telecaller</option>
                 <option value="Lead">Lead</option>
+                <option value="Admin">Admin</option>
               </select>
             </div>
 

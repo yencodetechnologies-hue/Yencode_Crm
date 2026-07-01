@@ -101,7 +101,7 @@ const LoginPage = () => {
       if (response.status === 200) {
         const userData = response.data.employee || response.data.admin;
         const { _id } = userData;
-        const role = userData.role || userData.adminType || (response.data.admin ? 'Superadmin' : 'employee');
+        const role = userData.role || userData.adminType || (response.data.admin ? 'Admin' : 'employee');
         localStorage.setItem("empId", _id);
         localStorage.setItem("role", role);
         if (response.data.accessToken) {
@@ -109,13 +109,13 @@ const LoginPage = () => {
         }
         refreshSession();
 
-        const telecallerRoles = ["Lead", "Telecaller", "TeamLeader", "Manager"];
-        const adminRoles = ["Superadmin", "Admin"];
+        const salesRoles = ["Telecaller", "Lead"];
+        const adminRoles = ["Admin", "Superadmin"];
         const from =
           location.state?.from ||
           (role === "employee"
             ? "/attendance-form"
-            : adminRoles.includes(role) || telecallerRoles.includes(role)
+            : adminRoles.includes(role) || salesRoles.includes(role)
             ? "/dashboard"
             : "/attendance-form");
 

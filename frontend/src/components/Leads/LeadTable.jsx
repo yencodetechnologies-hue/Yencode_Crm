@@ -20,7 +20,7 @@ const LeadTable = () => {
   const fileRef = useRef(null);
   const navigate = useNavigate();
 
-  const isAdmin = ['Superadmin', 'Admin', 'Manager', 'TeamLeader'].includes(role);
+  const isAdmin = ['Admin', 'Superadmin', 'Lead'].includes(role);
 
   const fetchLeads = async () => {
     try {

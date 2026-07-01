@@ -364,12 +364,13 @@ import Reports from "./components/Reports/Reports";
 import { refreshSession, isSessionExpired } from "./utils/session";
 
 const normalizeRole = (role) => {
-  const map = { Superadmin: 'Admin', Lead: 'Telecaller', employee: 'Telecaller' };
+  const map = { Superadmin: 'Admin' };
   return map[role] || role;
 };
 
-const TELECALLER_ROLES = ['Lead', 'Telecaller'];
-const MANAGER_ROLES = ['Manager', 'TeamLeader'];
+const TELECALLER_ROLES = ['Telecaller'];
+const LEAD_ROLES = ['Lead'];
+const ADMIN_ROLES = ['Admin', 'Superadmin'];
 
 const RouteTransition = ({ children }) => {
   return <>{children}</>;
@@ -508,7 +509,7 @@ const RoutesWithPreloader = () => {
     '/mom', '/momdetails', '/mom-edit', '/search-results',
   ];
 
-  const managerRoutes = [
+  const leadRoutes = [
     ...telecallerRoutes,
     '/campaigns', '/reports', '/search-leads', '/employee-table',
   ];
@@ -563,21 +564,23 @@ const RoutesWithPreloader = () => {
   ];
 
   const isValidPath = (path) => {
-    const nr = normalizeRole(role);
-    if (role === "employee") {
+    if (role === 'employee') {
       return employeeRoutes.some(route => path.startsWith(route));
     }
-    if (TELECALLER_ROLES.includes(role) || nr === 'Telecaller') {
+    if (TELECALLER_ROLES.includes(role)) {
       return telecallerRoutes.some(route => path.startsWith(route));
     }
-    if (MANAGER_ROLES.includes(role) || nr === 'Manager' || nr === 'TeamLeader') {
-      return managerRoutes.some(route => path.startsWith(route));
+    if (LEAD_ROLES.includes(role)) {
+      return leadRoutes.some(route => path.startsWith(route));
+    }
+    if (ADMIN_ROLES.includes(role) || normalizeRole(role) === 'Admin') {
+      return adminRoutes.some(route => path.startsWith(route));
     }
     return adminRoutes.some(route => path.startsWith(route));
   };
 
-  const isTelecallerOnly = TELECALLER_ROLES.includes(role) || normalizeRole(role) === 'Telecaller';
-  const isManager = MANAGER_ROLES.includes(role) || ['Manager', 'TeamLeader'].includes(normalizeRole(role));
+  const isTelecallerOnly = TELECALLER_ROLES.includes(role);
+  const isLead = LEAD_ROLES.includes(role);
 
   const telecallerRouteElements = (
     <>
@@ -649,7 +652,7 @@ const RoutesWithPreloader = () => {
                   </Routes>
                 </AdminLayout>
               )
-            ) : isManager ? (
+            ) : isLead ? (
               !isValidPath(location.pathname) ? (
                 <Navigate to="/login" replace />
               ) : (

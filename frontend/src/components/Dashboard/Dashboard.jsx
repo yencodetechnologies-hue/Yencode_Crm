@@ -31,8 +31,8 @@ const Card = ({ title, value, loading, iconColor }) => {
 
 export default function Dashboard() {
   const role = localStorage.getItem("role");
-  const isAdmin = role === "Superadmin" || role === "Admin";
-  const isSales = ["Lead", "Telecaller", "TeamLeader", "Manager"].includes(role);
+  const isAdmin = role === "Admin" || role === "Superadmin";
+  const isSales = role === "Telecaller" || role === "Lead";
 
   const [hr, setHr] = useState({});
   const [crm, setCrm] = useState(null);

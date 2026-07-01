@@ -366,14 +366,19 @@ const EmployeeEdit = () => {
 
             <div>
               <label className="block font-semibold">Role</label>
-              <input
-                type="text"
+              <select
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border rounded-md"
                 required
-              />
+              >
+                <option value="">Select Role</option>
+                <option value="employee">Employee</option>
+                <option value="Telecaller">Telecaller</option>
+                <option value="Lead">Lead</option>
+                <option value="Admin">Admin</option>
+              </select>
             </div>
 
             <div>

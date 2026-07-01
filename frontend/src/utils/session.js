@@ -1,4 +1,4 @@
-const SALES_ROLES = ['Lead', 'Telecaller', 'TeamLeader'];
+const SALES_ROLES = ['Telecaller', 'Lead'];
 
 export const isSalesRole = (role) => SALES_ROLES.includes(role);
 
