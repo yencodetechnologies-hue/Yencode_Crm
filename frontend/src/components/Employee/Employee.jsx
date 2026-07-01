@@ -95,13 +95,20 @@ const EmployeeForm = () => {
 
   const handleAddressChange = (e, type) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [type]: {
+    setFormData((prevData) => {
+      const updatedAddress = {
         ...prevData[type],
         [name]: value
+      };
+      const next = {
+        ...prevData,
+        [type]: updatedAddress
+      };
+      if (type === 'presentAddress' && isPermanentAddressSame) {
+        next.permanentAddress = { ...updatedAddress };
       }
-    }));
+      return next;
+    });
   };
 
 
@@ -118,15 +125,22 @@ const EmployeeForm = () => {
 
       if (response.data.success && response.data.address) {
         const { area, city, state } = response.data.address;
-        setFormData((prevData) => ({
-          ...prevData,
-          [addressType]: {
+        setFormData((prevData) => {
+          const updatedAddress = {
             ...prevData[addressType],
             area: area || '',
             city: city || '',
             state: state || ''
+          };
+          const next = {
+            ...prevData,
+            [addressType]: updatedAddress
+          };
+          if (addressType === 'presentAddress' && isPermanentAddressSame) {
+            next.permanentAddress = { ...updatedAddress, pincode: prevData.presentAddress.pincode };
           }
-        }));
+          return next;
+        });
       } else {
         alert('Invalid Pincode or API Error!');
       }
@@ -141,13 +155,20 @@ const EmployeeForm = () => {
 
   const handlePincodeChange = (e, addressType) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [addressType]: {
+    setFormData((prevData) => {
+      const updatedAddress = {
         ...prevData[addressType],
         [name]: value,
-      },
-    }));
+      };
+      const next = {
+        ...prevData,
+        [addressType]: updatedAddress,
+      };
+      if (addressType === 'presentAddress' && isPermanentAddressSame) {
+        next.permanentAddress = { ...updatedAddress };
+      }
+      return next;
+    });
     if (value.length === 6) fetchAddressDetails(value, addressType);
   };
 
@@ -174,16 +195,19 @@ const EmployeeForm = () => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const submitData = isPermanentAddressSame
+      ? { ...formData, permanentAddress: { ...formData.presentAddress } }
+      : formData;
     const formDataToSubmit = new FormData();
-    Object.keys(formData).forEach(key => {
+    Object.keys(submitData).forEach(key => {
       if (key === 'presentAddress' || key === 'permanentAddress') {
-        Object.keys(formData[key]).forEach(addressKey => {
-          formDataToSubmit.append(`${key}[${addressKey}]`, formData[key][addressKey]);
+        Object.keys(submitData[key]).forEach(addressKey => {
+          formDataToSubmit.append(`${key}[${addressKey}]`, submitData[key][addressKey]);
         });
-      } else if (formData[key] instanceof File) {
-        formDataToSubmit.append(key, formData[key]);
+      } else if (submitData[key] instanceof File) {
+        formDataToSubmit.append(key, submitData[key]);
       } else {
-        formDataToSubmit.append(key, formData[key]);
+        formDataToSubmit.append(key, submitData[key]);
       }
     });
 
@@ -648,7 +672,6 @@ const EmployeeForm = () => {
                 onChange={(e) => handleAddressChange(e, 'presentAddress')}
                 className="w-full px-4 py-2 border rounded-md"
                 placeholder="City"
-                readOnly
               />
               <input
                 type="text"
@@ -677,65 +700,60 @@ const EmployeeForm = () => {
               />
             </div>
 
-            <div>
-              <label className="block font-semibold">Permanent Address</label>
-              <input
-                type="text"
-                name="addressLine"
-                value={formData.permanentAddress.addressLine}
-                onChange={(e) => handleAddressChange(e, 'permanentAddress')}
-                className="w-full px-4 py-2 border rounded-md"
-                placeholder="Address Line"
-                disabled={isPermanentAddressSame}
-              />
-              <input
-                type="text"
-                name="area"
-                value={formData.permanentAddress.area}
-                onChange={(e) => handleAddressChange(e, 'permanentAddress')}
-                className="w-full px-4 py-2 border rounded-md"
-                placeholder="Area"
-                disabled={isPermanentAddressSame}
-              />
-              <input
-                type="text"
-                name="city"
-                value={formData.permanentAddress.city}
-                onChange={(e) => handleAddressChange(e, 'permanentAddress')}
-                className="w-full px-4 py-2 border rounded-md"
-                placeholder="City"
-                readOnly
-                disabled={isPermanentAddressSame}
-              />
-              <input
-                type="text"
-                name="state"
-                value={formData.permanentAddress.state}
-                onChange={(e) => handleAddressChange(e, 'permanentAddress')}
-                className="w-full px-4 py-2 border rounded-md"
-                placeholder="State"
-                readOnly
-                disabled={isPermanentAddressSame}
-              />
-              <input
-                type="text"
-                name="pincode"
-                value={formData.permanentAddress.pincode}
-                onChange={(e) => handlePincodeChange(e, 'permanentAddress')}
-                className="w-full px-4 py-2 border rounded-md"
-                placeholder="Pincode"
-                disabled={isPermanentAddressSame}
-              />
-              <input
-                type="text"
-                name="landmark"
-                value={formData.permanentAddress.landmark}
-                onChange={(e) => handleAddressChange(e, 'permanentAddress')}
-                className="w-full px-4 py-2 border rounded-md"
-                placeholder="Landmark"
-                disabled={isPermanentAddressSame}
-              />
-            </div>
+            {!isPermanentAddressSame && (
+              <div>
+                <label className="block font-semibold">Permanent Address</label>
+                <input
+                  type="text"
+                  name="addressLine"
+                  value={formData.permanentAddress.addressLine}
+                  onChange={(e) => handleAddressChange(e, 'permanentAddress')}
+                  className="w-full px-4 py-2 border rounded-md"
+                  placeholder="Address Line"
+                />
+                <input
+                  type="text"
+                  name="area"
+                  value={formData.permanentAddress.area}
+                  onChange={(e) => handleAddressChange(e, 'permanentAddress')}
+                  className="w-full px-4 py-2 border rounded-md"
+                  placeholder="Area"
+                />
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.permanentAddress.city}
+                  onChange={(e) => handleAddressChange(e, 'permanentAddress')}
+                  className="w-full px-4 py-2 border rounded-md"
+                  placeholder="City"
+                />
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.permanentAddress.state}
+                  onChange={(e) => handleAddressChange(e, 'permanentAddress')}
+                  className="w-full px-4 py-2 border rounded-md"
+                  placeholder="State"
+                  readOnly
+                />
+                <input
+                  type="text"
+                  name="pincode"
+                  value={formData.permanentAddress.pincode}
+                  onChange={(e) => handlePincodeChange(e, 'permanentAddress')}
+                  className="w-full px-4 py-2 border rounded-md"
+                  placeholder="Pincode"
+                />
+                <input
+                  type="text"
+                  name="landmark"
+                  value={formData.permanentAddress.landmark}
+                  onChange={(e) => handleAddressChange(e, 'permanentAddress')}
+                  className="w-full px-4 py-2 border rounded-md"
+                  placeholder="Landmark"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block font-semibold">Address Proof Type</label>
@@ -764,16 +782,6 @@ const EmployeeForm = () => {
                 name="addressProofNumber"
                 value={formData.addressProofNumber}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border rounded-md"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold">Upload Address Proof</label>
-              <input
-                type="file"
-                name="addressProofFile"
-                onChange={handleFileChange}
                 className="w-full px-4 py-2 border rounded-md"
               />
             </div>

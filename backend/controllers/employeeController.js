@@ -145,11 +145,10 @@ const fetchAddressDetailsByPincode = async (pincode) => {
 
     if (response.data && Array.isArray(response.data.places) && response.data.places.length > 0) {
       const { "place name": area, state, country } = response.data.places[0];
-      const city = state || area;
 
       return {
         area: area || "Unknown Area",
-        city,
+        city: "",
         state: state || "Unknown State",
         country: country || "India",
       };
