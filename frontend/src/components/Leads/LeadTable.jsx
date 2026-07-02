@@ -83,6 +83,12 @@ const LeadTable = () => {
 
   const isAdmin = isAdminRole(role) || isLeadRole(role);
   const isTelecaller = isTelecallerRole(role);
+  const employeeList = useMemo(() => {
+    if (Array.isArray(employees)) return employees;
+    if (Array.isArray(employees?.employees)) return employees.employees;
+    if (Array.isArray(employees?.data)) return employees.data;
+    return [];
+  }, [employees]);
 
   const mode = useMemo(() => {
     const qs = new URLSearchParams(location.search);
@@ -114,7 +120,16 @@ const LeadTable = () => {
   useEffect(() => { fetchLeads(); }, []);
   useEffect(() => {
     if (isAdmin) {
-      getAllEmployees({ salesOnly: 'true' }).then((r) => r.status === 200 && setEmployees(r.data));
+      getAllEmployees({ salesOnly: 'true' }).then((r) => {
+        if (r?.status !== 200) return;
+        const payload = r?.data;
+        const list = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.employees)
+            ? payload.employees
+            : [];
+        setEmployees(list);
+      });
     }
   }, [isAdmin]);
 
@@ -376,7 +391,7 @@ const LeadTable = () => {
                 </Button>
                 <select value={assignTo} onChange={(e) => setAssignTo(e.target.value)} className="border p-2 rounded">
                   <option value="">Assign to...</option>
-                  {employees.map((e) => (
+                  {employeeList.map((e) => (
                     <option key={e._id} value={e._id}>
                       {e.name} ({normalizeRole(e.role) || 'No role'})
                     </option>
