@@ -257,7 +257,7 @@ const TaskList = () => {
                         <Eye size={20} />
                     </button>
                     <button
-                        className={`text-green-500 p-2 rounded-full transition-colors ${role !== "Superadmin" ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-200'}`}
+                        className={`text-primary p-2 rounded-full transition-colors ${role !== "Superadmin" ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-light'}`}
                         title="Delete Task"
                         onClick={() => handleDelete(row.original._id)}
                         disabled={role !== "Superadmin"}

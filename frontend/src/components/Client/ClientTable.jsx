@@ -128,7 +128,7 @@ const ClientTable = () => {
       accessor: '_id',
       Cell: ({ row }) => (
         <div className="flex justify-center space-x-2">
-          <button className="text-green-500 hover:bg-green-100 p-2 rounded-full transition-colors" onClick={() => handleEdit(row.original._id)}>
+          <button className="text-primary hover:bg-primary-light p-2 rounded-full transition-colors" onClick={() => handleEdit(row.original._id)}>
             <Edit size={20} />
           </button>
           <button className="text-red-500 hover:bg-red-100 p-2 rounded-full transition-colors" onClick={() => handleDelete(row.original._id)}>
@@ -220,7 +220,7 @@ const ClientTable = () => {
         </div>
 
         <div className="flex space-x-4">
-          <button onClick={exportToExcel} className="bg-green-500 text-white px-6 py-2 rounded flex items-center hover:bg-green-600">
+          <button onClick={exportToExcel} className="bg-primary text-white px-6 py-2 rounded flex items-center hover:bg-primary-dark">
             <FaFileDownload className="mr-2" /> Export Data
           </button>
           <Link to="/client-form" className="bg-blue-500 text-white px-6 py-2 rounded flex items-center hover:bg-blue-600">

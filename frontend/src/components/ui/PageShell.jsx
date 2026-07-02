@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function PageShell({ title, description, actions, children, className = '' }) {
   return (
-    <div className={`max-w-7xl mx-auto px-6 pt-28 pb-10 ${className}`}>
+    <div className={`max-w-7xl mx-auto px-6 pt-8 pb-10 ${className}`}>
       {(title || actions) && (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>

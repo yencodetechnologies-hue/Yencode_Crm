@@ -29,56 +29,53 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-const iconColorMap = {
-  green: { bg: "bg-green-100", text: "text-green-600" },
-  blue: { bg: "bg-blue-100", text: "text-blue-600" },
-  orange: { bg: "bg-orange-100", text: "text-orange-600" },
-  purple: { bg: "bg-purple-100", text: "text-purple-600" },
-  pink: { bg: "bg-pink-100", text: "text-pink-600" },
-  red: { bg: "bg-red-100", text: "text-red-600" },
-  yellow: { bg: "bg-yellow-100", text: "text-yellow-600" },
-  brown: { bg: "bg-amber-100", text: "text-amber-600" },
-  teal: { bg: "bg-teal-100", text: "text-teal-600" },
-  emerald: { bg: "bg-emerald-100", text: "text-emerald-600" },
-};
-
 const iconMap = {
-  green: Users,
-  blue: CalendarCheck,
-  orange: Briefcase,
-  purple: Palmtree,
-  pink: TrendingUp,
-  red: FolderKanban,
-  yellow: ClipboardList,
-  brown: UserCheck,
-  teal: Clock,
-  emerald: TrendingUp,
+  employees: Users,
+  attendance: CalendarCheck,
+  projects: FolderKanban,
+  tasks: ClipboardList,
+  clients: Briefcase,
+  leave: Palmtree,
+  leads: UserCheck,
+  payrolls: TrendingUp,
+  calls: Clock,
+  revenue: TrendingUp,
 };
 
-const StatCard = ({ title, value, loading, iconColor }) => {
-  const colors = iconColorMap[iconColor] || iconColorMap.blue;
-  const Icon = iconMap[iconColor] || ClipboardList;
+const StatCard = ({ title, value, loading, icon, label }) => {
+  const Icon = icon || ClipboardList;
 
   return (
-    <Card className="p-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <p className="text-slate-500 text-sm font-medium">{title}</p>
-          <p className="text-3xl font-bold text-slate-900 mt-1">{loading ? "…" : value}</p>
+    <Card className="p-6 border-l-4 border-primary shadow-lg">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="text-slate-500 text-sm font-medium">{title}</p>
+            {label && (
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary-light text-primary-dark font-semibold">
+                {label}
+              </span>
+            )}
+          </div>
+          {loading ? (
+            <div className="mt-2 h-9 w-28 rounded-md bg-slate-100 animate-pulse" />
+          ) : (
+            <p className="text-3xl font-bold text-slate-900 mt-1 truncate">{value}</p>
+          )}
         </div>
-        <div className={`w-12 h-12 ${colors.bg} rounded-xl flex items-center justify-center`}>
-          <Icon className={`w-6 h-6 ${colors.text}`} />
+        <div className="w-12 h-12 bg-primary-light rounded-xl flex items-center justify-center shrink-0">
+          <Icon className="w-6 h-6 text-primary" />
         </div>
       </div>
     </Card>
   );
 };
 
-const QuickAction = ({ to, title, description, icon: Icon, color }) => (
+const QuickAction = ({ to, title, description, icon: Icon }) => (
   <Link to={to}>
-    <Card hover className="p-5 h-full">
-      <div className={`w-10 h-10 ${color.bg} rounded-lg flex items-center justify-center mb-3`}>
-        <Icon className={`w-5 h-5 ${color.text}`} />
+    <Card hover className="p-5 h-full border border-slate-200">
+      <div className="w-10 h-10 bg-primary-light rounded-lg flex items-center justify-center mb-3">
+        <Icon className="w-5 h-5 text-primary" />
       </div>
       <h3 className="font-semibold text-slate-900">{title}</h3>
       <p className="text-sm text-slate-500 mt-1">{description}</p>
@@ -176,12 +173,17 @@ export default function Dashboard() {
   if (isEmployee) {
     return (
       <PageShell>
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold text-slate-900">
-            {getGreeting()}, {empName}
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">{formattedDate}</p>
-        </div>
+        <Card className="p-6 mb-8 overflow-hidden">
+          <div className="rounded-xl p-6 bg-gradient-to-r from-primary-dark via-primary to-blue-400 text-white">
+            <p className="text-sm text-white/90">{formattedDate}</p>
+            <h1 className="text-2xl sm:text-3xl font-semibold mt-1">
+              {getGreeting()}, {empName}
+            </h1>
+            <p className="text-sm text-white/90 mt-1">
+              Welcome back. Here is a quick summary of your day.
+            </p>
+          </div>
+        </Card>
 
         <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
@@ -190,30 +192,27 @@ export default function Dashboard() {
             title="Check In"
             description="Mark your attendance for today"
             icon={CalendarCheck}
-            color={iconColorMap.blue}
           />
           <QuickAction
             to="/leave"
             title="Apply Leave"
             description="Submit a leave or permission request"
             icon={Palmtree}
-            color={iconColorMap.purple}
           />
           <QuickAction
             to="/task"
             title="My Tasks"
             description="View and track your assigned tasks"
             icon={ClipboardList}
-            color={iconColorMap.yellow}
           />
         </div>
 
         <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">My Overview</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard title="My Attendance" value={hr.attendance} loading={loading} iconColor="blue" />
-          <StatCard title="My Tasks" value={hr.tasks} loading={loading} iconColor="yellow" />
-          <StatCard title="My Leave Requests" value={hr.leave} loading={loading} iconColor="purple" />
-          <StatCard title="My Projects" value={hr.projects} loading={loading} iconColor="red" />
+          <StatCard title="My Attendance" value={hr.attendance} loading={loading} icon={iconMap.attendance} label="HR" />
+          <StatCard title="My Tasks" value={hr.tasks} loading={loading} icon={iconMap.tasks} label="Work" />
+          <StatCard title="My Leave Requests" value={hr.leave} loading={loading} icon={iconMap.leave} label="HR" />
+          <StatCard title="My Projects" value={hr.projects} loading={loading} icon={iconMap.projects} label="Work" />
         </div>
       </PageShell>
     );
@@ -221,30 +220,40 @@ export default function Dashboard() {
 
   return (
     <PageShell title="Dashboard">
-      <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">Overview</h3>
+      <Card className="p-6 mb-8 overflow-hidden">
+        <div className="rounded-xl p-6 bg-gradient-to-r from-primary-dark via-primary to-blue-400 text-white">
+          <p className="text-sm text-white/90">{formattedDate}</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold mt-1">{getGreeting()}</h1>
+          <p className="text-sm text-white/90 mt-1">
+            Track HR and CRM performance at a glance.
+          </p>
+        </div>
+      </Card>
+
+      <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">HR Overview</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        {isAdmin && <StatCard title="Total Employees" value={hr.employees} loading={loading} iconColor="green" />}
-        <StatCard title="Attendance" value={hr.attendance} loading={loading} iconColor="blue" />
-        <StatCard title="Total Projects" value={hr.projects} loading={loading} iconColor="red" />
-        <StatCard title="Tasks" value={hr.tasks} loading={loading} iconColor="yellow" />
-        {isAdmin && <StatCard title="Clients" value={hr.clients} loading={loading} iconColor="orange" />}
-        <StatCard title="Leave Requests" value={hr.leave} loading={loading} iconColor="purple" />
-        <StatCard title="Total Leads" value={hr.leads} loading={loading} iconColor="brown" />
-        {isAdmin && <StatCard title="Payrolls" value={hr.payrolls} loading={loading} iconColor="pink" />}
+        {isAdmin && <StatCard title="Total Employees" value={hr.employees} loading={loading} icon={iconMap.employees} label="HR" />}
+        <StatCard title="Attendance" value={hr.attendance} loading={loading} icon={iconMap.attendance} label="HR" />
+        <StatCard title="Total Projects" value={hr.projects} loading={loading} icon={iconMap.projects} label="Work" />
+        <StatCard title="Tasks" value={hr.tasks} loading={loading} icon={iconMap.tasks} label="Work" />
+        {isAdmin && <StatCard title="Clients" value={hr.clients} loading={loading} icon={iconMap.clients} label="Clients" />}
+        <StatCard title="Leave Requests" value={hr.leave} loading={loading} icon={iconMap.leave} label="HR" />
+        <StatCard title="Total Leads" value={hr.leads} loading={loading} icon={iconMap.leads} label="CRM" />
+        {isAdmin && <StatCard title="Payrolls" value={hr.payrolls} loading={loading} icon={iconMap.payrolls} label="HR" />}
       </div>
 
       {(isSales || isAdmin) && crm && (
         <>
           <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wide mb-4">Sales & Calling</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
-            <StatCard title="New Leads" value={crm.newLeads} loading={loading} iconColor="green" />
-            <StatCard title="Assigned Leads" value={crm.assignedLeads} loading={loading} iconColor="purple" />
-            <StatCard title="Today's Calls" value={crm.todaysCalls} loading={loading} iconColor="orange" />
-            <StatCard title="Connected Calls" value={crm.connectedCalls} loading={loading} iconColor="teal" />
-            <StatCard title="Follow-ups Today" value={crm.followUpsToday} loading={loading} iconColor="yellow" />
-            <StatCard title="Converted" value={crm.convertedLeads} loading={loading} iconColor="emerald" />
-            <StatCard title="Lost" value={crm.lostLeads} loading={loading} iconColor="red" />
-            <StatCard title="Revenue" value={`₹${crm.revenue || 0}`} loading={loading} iconColor="pink" />
+            <StatCard title="New Leads" value={crm.newLeads} loading={loading} icon={iconMap.leads} label="CRM" />
+            <StatCard title="Assigned Leads" value={crm.assignedLeads} loading={loading} icon={iconMap.leads} label="CRM" />
+            <StatCard title="Today's Calls" value={crm.todaysCalls} loading={loading} icon={iconMap.calls} label="Calls" />
+            <StatCard title="Connected Calls" value={crm.connectedCalls} loading={loading} icon={iconMap.calls} label="Calls" />
+            <StatCard title="Follow-ups Today" value={crm.followUpsToday} loading={loading} icon={iconMap.calls} label="CRM" />
+            <StatCard title="Converted" value={crm.convertedLeads} loading={loading} icon={iconMap.leads} label="CRM" />
+            <StatCard title="Lost" value={crm.lostLeads} loading={loading} icon={iconMap.leads} label="CRM" />
+            <StatCard title="Revenue" value={`₹${crm.revenue || 0}`} loading={loading} icon={iconMap.revenue} label="₹" />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -255,20 +264,23 @@ export default function Dashboard() {
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="p-2 text-left text-slate-600">Agent</th>
-                      <th className="p-2 text-left text-slate-600">Calls</th>
-                      <th className="p-2 text-left text-slate-600">Connected</th>
-                      <th className="p-2 text-left text-slate-600">Rate</th>
+                    <tr className="bg-primary-light/60 border-b border-slate-200">
+                      <th className="p-3 text-left text-slate-700 font-semibold">Agent</th>
+                      <th className="p-3 text-left text-slate-700 font-semibold">Calls</th>
+                      <th className="p-3 text-left text-slate-700 font-semibold">Connected</th>
+                      <th className="p-3 text-left text-slate-700 font-semibold">Rate</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {crm.agentPerformance.map((a) => (
-                      <tr key={a.agentId} className="border-b border-slate-100">
-                        <td className="p-2">{a.name}</td>
-                        <td className="p-2">{a.calls}</td>
-                        <td className="p-2">{a.connected}</td>
-                        <td className="p-2">{a.connectRate}%</td>
+                    {crm.agentPerformance.map((a, idx) => (
+                      <tr
+                        key={a.agentId}
+                        className={`${idx % 2 === 0 ? "bg-white" : "bg-slate-50"} border-b border-slate-100`}
+                      >
+                        <td className="p-3 font-medium text-slate-900">{a.name}</td>
+                        <td className="p-3 text-slate-700">{a.calls}</td>
+                        <td className="p-3 text-slate-700">{a.connected}</td>
+                        <td className="p-3 text-slate-700">{a.connectRate}%</td>
                       </tr>
                     ))}
                   </tbody>
@@ -280,9 +292,11 @@ export default function Dashboard() {
               {!crm.recentActivities?.length ? (
                 <p className="text-slate-500">No recent activity</p>
               ) : (
-                <div className="space-y-3 max-h-80 overflow-y-auto">
+                <div className="space-y-4 max-h-80 overflow-y-auto">
                   {crm.recentActivities.map((a) => (
-                    <div key={a._id} className="border-l-4 border-primary pl-3 py-1">
+                    <div key={a._id} className="relative pl-6">
+                      <span className="absolute left-0 top-1.5 w-2.5 h-2.5 rounded-full bg-primary" />
+                      <span className="absolute left-1.5 top-4 bottom-0 w-px bg-primary/30" />
                       <p className="text-sm font-medium text-slate-900">
                         {a.type?.replace("_", " ")} — {a.leadId?.name || "Lead"}
                       </p>

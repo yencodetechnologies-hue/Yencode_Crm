@@ -346,7 +346,7 @@ const PayrollEmployee = () => {
           </button>
           <button
             onClick={exportToExcel}
-            className="bg-green-500 text-white px-4 py-2 rounded"
+            className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded"
           >
             Export Data
           </button>
@@ -450,7 +450,7 @@ const PayrollEmployee = () => {
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-gray-600">Present</p>
-                    <p className="text-lg font-semibold text-green-600">{attendanceSummary.present}</p>
+                    <p className="text-lg font-semibold text-primary">{attendanceSummary.present}</p>
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-gray-600">Remaining Days</p>

@@ -78,7 +78,7 @@ const CampaignTable = () => {
           <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} className="border p-2 rounded" />
           <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} className="border p-2 rounded" />
           <textarea placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="border p-2 rounded col-span-2" />
-          <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded col-span-2">{editing ? 'Update' : 'Create'}</button>
+          <button type="submit" className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded col-span-2">{editing ? 'Update' : 'Create'}</button>
         </form>
       )}
 

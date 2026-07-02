@@ -324,7 +324,7 @@ const AttendanceTable = () => {
                                 !row.original.logouttime ? (
                                     <button
                                         onClick={() => openWorkReportModal(row.original._id)}
-                                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-sm"
+                                        className="bg-primary text-white px-3 py-1 rounded hover:bg-primary-dark text-sm"
                                     >
                                         Set Logout
                                     </button>

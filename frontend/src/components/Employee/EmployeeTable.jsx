@@ -216,7 +216,7 @@ const EmployeeTable = () => {
             </button>
             <button
               onClick={() => navigate(`/employee-edit/${row.original._id}`)}
-              className="text-green-500 hover:bg-green-100 p-2 rounded-full transition-colors"
+              className="text-primary hover:bg-primary-light p-2 rounded-full transition-colors"
               title="Edit Employee"
             >
               <Edit size={20} />
@@ -366,7 +366,7 @@ const EmployeeTable = () => {
         <div className="flex space-x-4">
           <button
             onClick={exportToExcel}
-            className="bg-green-500 text-white px-6 py-2 rounded flex items-center hover:bg-green-600"
+            className="bg-primary text-white px-6 py-2 rounded flex items-center hover:bg-primary-dark"
           >
             <FaFileDownload className="mr-2" />
             Export Data

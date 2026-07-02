@@ -65,7 +65,7 @@ const CustomerProfile = () => {
           <p className="text-gray-500">{lead.leadId} · {lead.status}</p>
         </div>
         <div className="space-x-2">
-          <Link to={`/calling/${id}`} className="bg-green-500 text-white px-4 py-2 rounded">Call</Link>
+          <Link to={`/calling/${id}`} className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded">Call</Link>
           <Link to={`/lead-edit/${id}`} className="bg-blue-500 text-white px-4 py-2 rounded">Log Call</Link>
         </div>
       </div>

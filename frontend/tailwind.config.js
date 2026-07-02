@@ -10,7 +10,9 @@ export default {
         primary: {
           DEFAULT: '#2563eb',
           dark: '#1d4ed8',
+          darker: '#1e3a8a',
           light: '#dbeafe',
+          muted: '#eff6ff',
         },
       },
       boxShadow: {

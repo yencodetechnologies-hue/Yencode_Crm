@@ -128,7 +128,7 @@ const LeadTable = () => {
       Cell: ({ row }) => (
         <div className="flex gap-1">
           <button onClick={() => navigate(`/lead/${row.original._id}`)} className="bg-gray-500 text-white px-2 py-1 rounded text-xs">Profile</button>
-          <button onClick={() => navigate(`/calling/${row.original._id}`)} className="bg-green-500 text-white px-2 py-1 rounded text-xs">Call</button>
+          <button onClick={() => navigate(`/calling/${row.original._id}`)} className="bg-primary text-white px-2 py-1 rounded text-xs hover:bg-primary-dark">Call</button>
           <button onClick={() => navigate(`/lead-edit/${row.original._id}`)} className="bg-blue-500 text-white px-2 py-1 rounded text-xs">Log</button>
           {isAdmin && (
             <button onClick={() => handleDelete(row.original._id)} className="text-red-500 p-1"><Trash2 size={16} /></button>
@@ -163,7 +163,7 @@ const LeadTable = () => {
             <>
               <input type="file" ref={fileRef} accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
               <button onClick={() => fileRef.current?.click()} className="bg-purple-500 text-white px-4 py-2 rounded flex items-center"><FaUpload className="mr-1" /> Import</button>
-              <button onClick={handleExport} className="bg-green-500 text-white px-4 py-2 rounded flex items-center"><FaFileDownload className="mr-1" /> Export</button>
+              <button onClick={handleExport} className="bg-primary text-white px-4 py-2 rounded flex items-center hover:bg-primary-dark"><FaFileDownload className="mr-1" /> Export</button>
               <select value={assignTo} onChange={(e) => setAssignTo(e.target.value)} className="border p-2 rounded">
                 <option value="">Assign to...</option>
                 {employees.map((e) => (

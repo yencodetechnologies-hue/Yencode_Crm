@@ -268,7 +268,7 @@ const LeaveTable = () => {
                 Cell: ({ row }) => (
                     <div className="flex justify-center space-x-2">
                         <button
-                            className="text-green-500 hover:bg-green-100 p-2 rounded-full transition-colors"
+                            className="text-primary hover:bg-primary-light p-2 rounded-full transition-colors"
                             title="Edit Leave"
                             onClick={() => handleEdit(row.original._id)}
                         >

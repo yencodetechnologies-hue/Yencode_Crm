@@ -264,7 +264,7 @@ function SearchLeads() {
                         <div className="col-span-2 text-center">
                             <button
                                 type="submit"
-                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-colors"
+                                className="bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-colors"
                             >
                                 Search
                             </button>

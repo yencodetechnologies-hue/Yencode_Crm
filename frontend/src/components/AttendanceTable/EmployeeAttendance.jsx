@@ -227,15 +227,15 @@ const EmployeeAttendance = () => {
 
       {submittedData && (
         <Card className="max-w-md mx-auto p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className="w-16 h-16 bg-primary-light rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-primary" />
           </div>
           <h3 className="text-xl font-semibold text-slate-900 mb-2">Attendance Recorded</h3>
           <p className="text-sm text-slate-500 mb-6">Redirecting to your attendance history...</p>
           <img
             src={submittedData.photo}
             alt="Captured"
-            className="w-32 h-32 rounded-full object-cover mx-auto mb-4 border-4 border-green-100"
+            className="w-32 h-32 rounded-full object-cover mx-auto mb-4 border-4 border-primary-light"
           />
           <div className="grid grid-cols-2 gap-3 text-sm text-left">
             <div className="bg-slate-50 rounded-lg p-3">
@@ -244,7 +244,7 @@ const EmployeeAttendance = () => {
             </div>
             <div className="bg-slate-50 rounded-lg p-3">
               <p className="text-slate-500">Status</p>
-              <p className="font-medium text-green-600">{submittedData.status}</p>
+              <p className="font-medium text-primary">{submittedData.status}</p>
             </div>
             <div className="bg-slate-50 rounded-lg p-3">
               <p className="text-slate-500">Date</p>

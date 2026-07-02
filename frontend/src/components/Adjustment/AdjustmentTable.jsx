@@ -299,7 +299,7 @@ const AdjustmentTable = () => {
                 <div className="flex space-x-4">
                     <button
                         onClick={exportToExcel}
-                        className="bg-green-500 text-white px-6 py-2 rounded flex items-center hover:bg-green-600"
+                        className="bg-primary text-white px-6 py-2 rounded flex items-center hover:bg-primary-dark"
                     >
                         <FaFileDownload className="mr-2" />
                         Export Data

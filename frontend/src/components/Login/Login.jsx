@@ -211,7 +211,7 @@ const LoginPage = () => {
                   title="Copy OTP to input"
                 >
                   {copied ? (
-                    <Check className="h-5 w-5 text-green-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   ) : (
                     <Copy className="h-5 w-5" />
                   )}

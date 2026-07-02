@@ -98,7 +98,7 @@ const Reports = () => {
           {loading ? 'Loading...' : 'Generate'}
         </button>
         {data && (
-          <button onClick={exportData} className="bg-green-500 text-white px-6 py-2 rounded">Export Excel</button>
+          <button onClick={exportData} className="bg-primary text-white px-6 py-2 rounded hover:bg-primary-dark">Export Excel</button>
         )}
       </div>
       {data?.summary && (

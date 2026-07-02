@@ -72,7 +72,7 @@ const CallingPanel = () => {
       <div className="bg-white rounded-xl shadow-lg p-8 text-center">
         <p className="text-5xl font-mono mb-6">{fmt(timer)}</p>
         <div className="flex justify-center gap-4 mb-8">
-          <button onClick={dial} className="bg-green-600 text-white px-8 py-3 rounded-full text-lg">Call</button>
+          <button onClick={dial} className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-full text-lg">Call</button>
           <button onClick={() => setActive(false)} className="bg-red-500 text-white px-8 py-3 rounded-full text-lg">End</button>
           <button onClick={redial} className="bg-yellow-500 text-white px-8 py-3 rounded-full text-lg">Redial</button>
         </div>

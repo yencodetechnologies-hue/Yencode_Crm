@@ -99,7 +99,7 @@ const LeadEdit = () => {
         <h2 className="text-3xl font-bold">Call Log — {lead.name}</h2>
         <div className="space-x-2">
           <Link to={`/lead/${id}`} className="bg-gray-500 text-white px-4 py-2 rounded">Profile</Link>
-          <Link to={`/calling/${id}`} className="bg-green-500 text-white px-4 py-2 rounded">Calling Panel</Link>
+          <Link to={`/calling/${id}`} className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded">Calling Panel</Link>
           <button onClick={() => navigate('/lead-table')} className="bg-blue-500 text-white px-4 py-2 rounded">Back</button>
         </div>
       </div>
@@ -118,7 +118,7 @@ const LeadEdit = () => {
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-xl font-semibold mb-4">Log Call</h3>
           <div className="flex items-center gap-4 mb-4">
-            <button onClick={startCall} className="bg-green-600 text-white px-6 py-2 rounded">Click to Call</button>
+            <button onClick={startCall} className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded">Click to Call</button>
             <span className="text-2xl font-mono">{formatTime(timer)}</span>
             {timerActive && (
               <button onClick={() => setTimerActive(false)} className="bg-red-500 text-white px-4 py-2 rounded">Stop</button>

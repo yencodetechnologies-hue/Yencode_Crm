@@ -312,7 +312,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import Dashboard from "./components/Dashboard/Dashboard";
-import Topbar from "./components/Topbar/Topbar";
 import EmployeeTable from "./components/Employee/EmployeeTable";
 import Employee from "./components/Employee/Employee";
 import LoginPage from "./components/Login/Login";
@@ -364,14 +363,13 @@ import Reports from "./components/Reports/Reports";
 import { ToastProvider } from "./components/ui";
 import { refreshSession, isSessionExpired } from "./utils/session";
 import { normalizeRole, isTelecallerRole, isLeadRole, isAdminRole } from "./utils/roles";
-
-const RouteTransition = ({ children }) => {
-  return <>{children}</>;
-};
+import Sidebar from "./components/Sidebar/Sidebar";
+import AppHeader from "./components/AppHeader/AppHeader";
 
 const AdminLayout = ({ children, loading }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Check auth status
   const checkAuth = () => {
@@ -422,12 +420,17 @@ const AdminLayout = ({ children, loading }) => {
   }, [location.pathname]);
 
   return (
-    <div className="app">
-      {loading && <Preloader />} 
-      {!loading && <Topbar />}  
-      <div className="main-content bg-slate-50 min-h-screen">
-        {children}
-      </div>
+    <div className="min-h-screen bg-slate-50">
+      {loading && <Preloader />}
+      {!loading && (
+        <div className="flex min-h-screen">
+          <Sidebar mobileOpen={mobileSidebarOpen} setMobileOpen={setMobileSidebarOpen} />
+          <div className="flex-1 flex flex-col md:pl-64">
+            <AppHeader onOpenMobileSidebar={() => setMobileSidebarOpen(true)} />
+            <main className="flex-1">{children}</main>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

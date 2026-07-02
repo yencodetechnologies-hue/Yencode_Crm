@@ -99,7 +99,7 @@ const FollowUpList = () => {
             <option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option>
           </select>
           <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} className="border p-2 rounded col-span-2" placeholder="Notes" />
-          <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded col-span-2">Save</button>
+          <button type="submit" className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded col-span-2">Save</button>
         </form>
       )}
 
@@ -131,7 +131,7 @@ const FollowUpList = () => {
                 <td className="p-3">{f.notes}</td>
                 <td className="p-3">
                   {f.status === 'Pending' && (
-                    <button onClick={() => handleComplete(f._id)} className="bg-green-500 text-white px-3 py-1 rounded text-sm">Complete</button>
+                    <button onClick={() => handleComplete(f._id)} className="bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-sm">Complete</button>
                   )}
                 </td>
               </tr>
