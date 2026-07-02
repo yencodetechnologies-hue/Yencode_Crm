@@ -146,19 +146,21 @@ const LeadTable = () => {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = async (ev) => {
-      const wb = XLSX.read(ev.target.result, { type: 'binary' });
-      const rawRows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-      const rows = rawRows
-        .map(mapImportedRow)
-        .filter((r) => r && String(r.name || '').trim() && String(r.contact || '').trim());
+      try {
+        const buffer = ev.target.result;
+        const wb = XLSX.read(buffer, { type: 'array' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        const rows = rawRows
+          .map(mapImportedRow)
+          .filter((r) => r && String(r.name || '').trim() && String(r.contact || '').trim());
 
-      if (!rows.length) {
-        showToast('No valid rows found. Please ensure Name and Contact No are filled.', 'error', 6000);
-        return;
-      }
+        if (!rows.length) {
+          showToast('No valid rows found. Please ensure Name and Contact No are filled.', 'error', 6000);
+          return;
+        }
 
-      const res = await importLeads(rows);
-      if (res.status === 200) {
+        const res = await importLeads(rows);
         const created = res.data?.results?.created ?? 0;
         const skipped = res.data?.results?.skipped ?? 0;
         const errors = Array.isArray(res.data?.results?.errors) ? res.data.results.errors : [];
@@ -166,14 +168,23 @@ const LeadTable = () => {
 
         showToast(`Imported: ${created}, Skipped: ${skipped}`, 'success');
         if (topErrors.length) {
-          showToast(`Skipped reasons: ${topErrors.join(' · ')}${errors.length > 3 ? ` (+${errors.length - 3} more)` : ''}`, 'info', 7000);
+          showToast(
+            `Skipped reasons: ${topErrors.join(' · ')}${errors.length > 3 ? ` (+${errors.length - 3} more)` : ''}`,
+            'info',
+            7000
+          );
         }
         await fetchLeads();
-      } else {
-        showToast('Import failed. Please check the file format.', 'error');
+      } catch (err) {
+        const apiMsg =
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          err?.message ||
+          'Import failed. Please check the file format.';
+        showToast(apiMsg, 'error', 7000);
       }
     };
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
   };
 
   const downloadTemplate = () => {
