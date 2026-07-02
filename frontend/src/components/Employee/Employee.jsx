@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { projectServices } from '../../api/axios/axiosInstance';
 import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { EMPLOYEE_FORM_ROLE_OPTIONS } from "../../utils/roles";
 
 const EmployeeForm = () => {
   const navigate = useNavigate(); 
@@ -383,10 +384,9 @@ const EmployeeForm = () => {
                 required
               >
                 <option value="">Select Role</option>
-                <option value="employee">Employee</option>
-                <option value="Telecaller">Telecaller</option>
-                <option value="Lead">Lead</option>
-                <option value="Admin">Admin</option>
+                {EMPLOYEE_FORM_ROLE_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label}</option>
+                ))}
               </select>
             </div>
 

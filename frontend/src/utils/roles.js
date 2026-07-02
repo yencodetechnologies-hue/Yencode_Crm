@@ -5,6 +5,13 @@ export const ROLES = {
   ADMIN: 'Admin',
 };
 
+export const EMPLOYEE_FORM_ROLE_OPTIONS = [
+  { value: ROLES.EMPLOYEE, label: 'Employee' },
+  { value: ROLES.TELECALLER, label: 'Telecaller' },
+  { value: ROLES.LEAD, label: 'Lead' },
+  { value: ROLES.ADMIN, label: 'Admin' },
+];
+
 export const normalizeRole = (role) => {
   const value = String(role || '').trim();
   if (!value) return '';
