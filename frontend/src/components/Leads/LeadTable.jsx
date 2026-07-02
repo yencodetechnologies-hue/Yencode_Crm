@@ -25,6 +25,48 @@ const IMPORT_COLUMNS = [
   'status',
 ];
 
+const normalizeHeader = (value) =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[^a-z0-9 ]/g, '');
+
+const pickFirst = (...values) => values.find((v) => v !== undefined && v !== null && String(v).trim() !== '');
+
+const normalizeContact = (value) => {
+  if (value === undefined || value === null) return '';
+  // Keep only digits; handle Excel numbers cleanly.
+  const digits = String(value).replace(/\D/g, '');
+  return digits;
+};
+
+const mapImportedRow = (row) => {
+  const mapped = {};
+
+  // Build a normalized-key lookup from the row (handles "Contact No", "contact_no", etc.)
+  const byKey = {};
+  Object.keys(row || {}).forEach((k) => {
+    byKey[normalizeHeader(k).replace(/\s/g, '')] = row[k];
+  });
+
+  mapped.name = pickFirst(byKey.name, byKey.leadname, byKey.customername, byKey.apartmentname, byKey.projectname);
+  mapped.contact = normalizeContact(pickFirst(byKey.contact, byKey.contactno, byKey.contactnumber, byKey.mobileno, byKey.mobile, byKey.phone, byKey.phonenumber));
+  mapped.alternateContact = normalizeContact(pickFirst(byKey.alternatecontact, byKey.altcontact, byKey.alternateno, byKey.alternatenumber));
+  mapped.email = pickFirst(byKey.email, byKey.emailid, byKey.mail);
+  mapped.company = pickFirst(byKey.company, byKey.organization, byKey.builder);
+  mapped.source = pickFirst(byKey.source, byKey.leadsource) || 'Manual';
+  mapped.city = pickFirst(byKey.city) || 'Chennai';
+  mapped.state = pickFirst(byKey.state) || 'TN';
+  mapped.country = pickFirst(byKey.country) || 'India';
+  mapped.address = pickFirst(byKey.address, byKey.location, byKey.fulladdress);
+  mapped.interest = pickFirst(byKey.interest, byKey.product, byKey.requirement);
+  mapped.priority = pickFirst(byKey.priority) || 'Medium';
+  mapped.status = pickFirst(byKey.status) || 'New';
+
+  return mapped;
+};
+
 const LeadTable = () => {
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +147,16 @@ const LeadTable = () => {
     const reader = new FileReader();
     reader.onload = async (ev) => {
       const wb = XLSX.read(ev.target.result, { type: 'binary' });
-      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      const rawRows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      const rows = rawRows
+        .map(mapImportedRow)
+        .filter((r) => r && String(r.name || '').trim() && String(r.contact || '').trim());
+
+      if (!rows.length) {
+        showToast('No valid rows found. Please ensure Name and Contact No are filled.', 'error', 6000);
+        return;
+      }
+
       const res = await importLeads(rows);
       if (res.status === 200) {
         const created = res.data?.results?.created ?? 0;
@@ -117,7 +168,7 @@ const LeadTable = () => {
         if (topErrors.length) {
           showToast(`Skipped reasons: ${topErrors.join(' · ')}${errors.length > 3 ? ` (+${errors.length - 3} more)` : ''}`, 'info', 7000);
         }
-        fetchLeads();
+        await fetchLeads();
       } else {
         showToast('Import failed. Please check the file format.', 'error');
       }

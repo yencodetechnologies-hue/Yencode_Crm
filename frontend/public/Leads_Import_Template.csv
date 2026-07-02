@@ -1,0 +1,5 @@
+name,contact,alternateContact,email,company,source,city,state,country,address,interest,priority,status
+John Doe,9876543210,,john@example.com,Acme Pvt Ltd,Google,Chennai,TN,India,"211, Velachery Main Rd, Velachery, Chennai, Tamil Nadu 600042",Product A,Medium,New
+Ceebros Heritage Apartments,7200755500,,,Apartment Leads,Manual,Chennai,TN,India,"211, Velachery Main Rd, Dhadeswaram Nagar, Velachery, Chennai, Tamil Nadu 600042",,Low,New
+Kochar JEWEL - Velachery,9940053000,,,Apartment Leads,Manual,Chennai,TN,India,"385 & 386, Velachery Main Rd, Velachery, Chennai, Tamil Nadu 600042",,Medium,New
+
