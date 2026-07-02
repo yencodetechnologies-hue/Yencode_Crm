@@ -225,9 +225,37 @@ const LeadTable = () => {
     setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   };
 
+  const pageLeadIds = useMemo(
+    () => (page || []).map((r) => r?.original?._id).filter(Boolean),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [page]
+  );
+
+  const allPageSelected = pageLeadIds.length > 0 && pageLeadIds.every((id) => selected.includes(id));
+  const somePageSelected = pageLeadIds.some((id) => selected.includes(id));
+
+  const toggleSelectAllPage = () => {
+    if (!pageLeadIds.length) return;
+    setSelected((prev) => {
+      const hasAll = pageLeadIds.every((id) => prev.includes(id));
+      if (hasAll) return prev.filter((id) => !pageLeadIds.includes(id));
+      const next = new Set(prev);
+      pageLeadIds.forEach((id) => next.add(id));
+      return Array.from(next);
+    });
+  };
+
   const columns = useMemo(() => [
     ...(isAdmin ? [{
-      Header: '',
+      Header: () => (
+        <input
+          type="checkbox"
+          checked={allPageSelected}
+          ref={(el) => { if (el) el.indeterminate = !allPageSelected && somePageSelected; }}
+          onChange={toggleSelectAllPage}
+          title="Select all on this page"
+        />
+      ),
       id: 'select',
       Cell: ({ row }) => (
         <input type="checkbox" checked={selected.includes(row.original._id)} onChange={() => toggleSelect(row.original._id)} />
@@ -270,7 +298,7 @@ const LeadTable = () => {
         </div>
       ),
     },
-  ], [selected, isAdmin, isCallMode, navigate, showToast]);
+  ], [selected, isAdmin, isCallMode, navigate, showToast, allPageSelected, somePageSelected, toggleSelectAllPage]);
 
   const tableInstance = useTable({ columns, data: leads, initialState: { pageSize: 15 } }, useGlobalFilter, useSortBy, usePagination);
   const { getTableProps, getTableBodyProps, headerGroups, page, prepareRow, setGlobalFilter, nextPage, previousPage, canNextPage, canPreviousPage, pageOptions, state: { pageIndex, globalFilter } } = tableInstance;
