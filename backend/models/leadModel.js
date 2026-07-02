@@ -9,7 +9,9 @@ const leadSchema = new mongoose.Schema(
   {
     leadId: { type: String, unique: true, sparse: true },
     name: { type: String, required: true },
-    contact: { type: String, required: true },
+    // Some lead sources (e.g. apartment lists) don't provide phone upfront.
+    // Keep optional so imports can still create leads; telecallers can enrich later.
+    contact: { type: String, default: '' },
     alternateContact: { type: String },
     email: { type: String, default: '' },
     company: { type: String },

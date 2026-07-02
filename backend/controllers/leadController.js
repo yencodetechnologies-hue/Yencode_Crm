@@ -287,28 +287,32 @@ exports.importLeads = async (req, res) => {
       const batch = rows.slice(i, i + batchSize);
       for (const row of batch) {
         try {
-          if (!row.name || !row.contact) {
+          if (!row.name) {
             results.skipped++;
-            results.errors.push({ row, reason: 'Missing name or contact' });
+            results.errors.push({ row, reason: 'Missing name' });
             continue;
           }
 
-          const duplicate = await isDuplicate({
-            contact: row.contact,
-            alternateContact: row.alternateContact,
-            email: row.email,
-          });
-          if (duplicate) {
-            results.skipped++;
-            results.errors.push({ row, reason: 'Duplicate' });
-            continue;
+          // Only run duplicate check if we have at least one dedupe field.
+          const hasDedupeFields = !!(row.contact || row.alternateContact || row.email);
+          if (hasDedupeFields) {
+            const duplicate = await isDuplicate({
+              contact: row.contact,
+              alternateContact: row.alternateContact,
+              email: row.email,
+            });
+            if (duplicate) {
+              results.skipped++;
+              results.errors.push({ row, reason: 'Duplicate' });
+              continue;
+            }
           }
 
           const leadId = await generateLeadId();
           const lead = new Lead({
             leadId,
             name: row.name,
-            contact: String(row.contact),
+            contact: row.contact ? String(row.contact) : '',
             alternateContact: row.alternateContact ? String(row.alternateContact) : undefined,
             email: row.email,
             company: row.company,

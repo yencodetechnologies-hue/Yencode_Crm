@@ -153,10 +153,10 @@ const LeadTable = () => {
         const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
         const rows = rawRows
           .map(mapImportedRow)
-          .filter((r) => r && String(r.name || '').trim() && String(r.contact || '').trim());
+          .filter((r) => r && String(r.name || '').trim());
 
         if (!rows.length) {
-          showToast('No valid rows found. Please ensure Name and Contact No are filled.', 'error', 6000);
+          showToast('No valid rows found. Please ensure Name is filled.', 'error', 6000);
           return;
         }
 
