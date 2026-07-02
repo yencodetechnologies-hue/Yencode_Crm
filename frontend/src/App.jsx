@@ -357,6 +357,7 @@ import SearchResults from "./components/SearchResults/SearchResults";
 import SearchLeads from "./components/SearchLeads/SearchLeads";
 import CustomerProfile from "./components/CustomerProfile/CustomerProfile";
 import CallingPanel from "./components/Calling/CallingPanel";
+import CallingQueue from "./components/Calling/CallingQueue";
 import FollowUpList from "./components/FollowUps/FollowUpList";
 import CampaignTable from "./components/Campaigns/CampaignTable";
 import Reports from "./components/Reports/Reports";
@@ -506,9 +507,8 @@ const RoutesWithPreloader = () => {
 
   const telecallerRoutes = [
     '/dashboard', '/lead-table', '/lead-form', '/lead-edit', '/lead/',
-    '/calling/', '/followups', '/attendance-table', '/attendance-form',
-    '/leave-table', '/leave', '/leave-edit', '/task', '/task-form', '/task-edit',
-    '/mom', '/momdetails', '/mom-edit', '/search-results',
+    '/calling/', '/calling-queue', '/followups', '/attendance-table', '/attendance-form',
+    '/leave-table', '/leave', '/leave-edit', '/search-results',
   ];
 
   const leadRoutes = [
@@ -587,6 +587,7 @@ const RoutesWithPreloader = () => {
   const telecallerRouteElements = (
     <>
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/calling-queue" element={<CallingQueue />} />
       <Route path="/lead-table" element={<LeadTable />} />
       <Route path="/lead-form" element={<LeadForm />} />
       <Route path="/lead-edit/:id" element={<LeadEdit />} />
@@ -598,12 +599,6 @@ const RoutesWithPreloader = () => {
       <Route path="/leave-table" element={<LeaveTable />} />
       <Route path="/leave" element={<Leave />} />
       <Route path="/leave-edit/:id" element={<LeaveEdit />} />
-      <Route path="/task" element={<TaskList />} />
-      <Route path="/task-form" element={<TaskForm />} />
-      <Route path="/task-edit/:taskId" element={<TaskEdit />} />
-      <Route path="/mom" element={<MoM />} />
-      <Route path="/momdetails" element={<BlogPage />} />
-      <Route path="/mom-edit/:id" element={<MoMEdit />} />
       <Route path="/search-results" element={<SearchResults />} />
     </>
   );

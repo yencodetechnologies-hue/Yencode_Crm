@@ -15,8 +15,9 @@ import {
   getAllProjects,
 } from "../../api/services/projectServices";
 import { projectServices } from "../../api/axios/axiosInstance";
-import { normalizeRole, isAdminRole, isSalesRole, isEmployeeRole } from "../../utils/roles";
+import { normalizeRole, isAdminRole, isSalesRole, isEmployeeRole, isTelecallerRole } from "../../utils/roles";
 import { PageShell, Card } from "../ui";
+import TelecallerDashboard from "./TelecallerDashboard";
 import {
   CalendarCheck,
   ClipboardList,
@@ -95,6 +96,7 @@ export default function Dashboard() {
   const isAdmin = isAdminRole(role);
   const isSales = isSalesRole(role);
   const isEmployee = isEmployeeRole(role);
+  const isTelecaller = isTelecallerRole(role);
   const empName = localStorage.getItem("empName") || "there";
   const empId = localStorage.getItem("empId");
 
@@ -105,6 +107,9 @@ export default function Dashboard() {
   useEffect(() => {
     const load = async () => {
       try {
+        // Telecallers have a dedicated dashboard component.
+        if (isTelecaller) return;
+
         if (isEmployee && empId) {
           const today = new Date();
           const firstDayOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
@@ -161,7 +166,7 @@ export default function Dashboard() {
       }
     };
     load();
-  }, [isAdmin, isSales, isEmployee, empId]);
+  }, [isAdmin, isSales, isEmployee, isTelecaller, empId]);
 
   const formattedDate = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
@@ -169,6 +174,10 @@ export default function Dashboard() {
     month: "long",
     day: "numeric",
   });
+
+  if (isTelecaller) {
+    return <TelecallerDashboard />;
+  }
 
   if (isEmployee) {
     return (

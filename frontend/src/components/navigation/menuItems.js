@@ -6,10 +6,12 @@ import {
   Clipboard,
   CreditCard,
   FileText,
+  PhoneCall,
 } from "lucide-react";
 
 export const menuItems = [
   { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+  { label: "Calling", path: "/calling-queue", icon: PhoneCall, roles: ["Telecaller", "Lead"] },
   {
     label: "CRM",
     icon: MessageCircleQuestion,
@@ -41,14 +43,14 @@ export const menuItems = [
       { label: "Payroll", path: "/payroll-table", roles: ["Admin", "Superadmin"] },
     ],
   },
-  { label: "Tasks", path: "/task", icon: Clipboard },
+  { label: "Tasks", path: "/task", icon: Clipboard, roles: ["Admin", "Superadmin", "employee", "Lead"] },
   {
     label: "Expenses",
     path: "/expense-table",
     icon: CreditCard,
     roles: ["Admin", "Superadmin"],
   },
-  { label: "MoM", path: "/momdetails", icon: FileText },
+  { label: "MoM", path: "/momdetails", icon: FileText, roles: ["Admin", "Superadmin", "employee", "Lead"] },
   { label: "Quotations", path: "/quotation-table", icon: FileText, roles: ["Admin", "Superadmin"] },
 ];
 

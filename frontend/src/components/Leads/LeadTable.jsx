@@ -1,13 +1,29 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, PhoneCall } from 'lucide-react';
 import { FaPlus, FaFileDownload, FaFilter, FaUpload } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getAllLeads, deleteLead, bulkAssignLeads, importLeads, exportLeads, getAllEmployees } from '../../api/services/projectServices';
 import { normalizeRole, isAdminRole, isLeadRole, isTelecallerRole } from '../../utils/roles';
 import * as XLSX from 'xlsx';
 import { useTable, useGlobalFilter, useSortBy, usePagination } from 'react-table';
+import { PageShell, Card, Button, useToast } from '../ui';
 
 const LEAD_STATUSES = ['New', 'Contacted', 'Follow-up', 'Interested', 'Not Interested', 'Converted', 'Lost', 'Wrong Number', 'No Response', 'Busy', 'Switched Off'];
+const IMPORT_COLUMNS = [
+  'name',
+  'contact',
+  'alternateContact',
+  'email',
+  'company',
+  'source',
+  'city',
+  'state',
+  'country',
+  'address',
+  'interest',
+  'priority',
+  'status',
+];
 
 const LeadTable = () => {
   const [leads, setLeads] = useState([]);
@@ -20,9 +36,17 @@ const LeadTable = () => {
   const [assignTo, setAssignTo] = useState('');
   const fileRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { showToast } = useToast();
 
   const isAdmin = isAdminRole(role) || isLeadRole(role);
   const isTelecaller = isTelecallerRole(role);
+
+  const mode = useMemo(() => {
+    const qs = new URLSearchParams(location.search);
+    return (qs.get('mode') || '').toLowerCase();
+  }, [location.search]);
+  const isCallMode = isTelecaller && mode === 'call';
 
   const fetchLeads = async () => {
     try {
@@ -65,8 +89,12 @@ const LeadTable = () => {
   };
 
   const handleBulkAssign = async () => {
-    if (!selected.length || !assignTo) return alert('Select leads and agent');
+    if (!selected.length || !assignTo) {
+      showToast('Select leads and an agent to assign.', 'info');
+      return;
+    }
     await bulkAssignLeads(selected, assignTo);
+    showToast('Leads assigned successfully.', 'success');
     setSelected([]);
     fetchLeads();
   };
@@ -80,11 +108,46 @@ const LeadTable = () => {
       const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
       const res = await importLeads(rows);
       if (res.status === 200) {
-        alert(`Imported: ${res.data.results.created}, Skipped: ${res.data.results.skipped}`);
+        const created = res.data?.results?.created ?? 0;
+        const skipped = res.data?.results?.skipped ?? 0;
+        const errors = Array.isArray(res.data?.results?.errors) ? res.data.results.errors : [];
+        const topErrors = errors.slice(0, 3).map((x) => x?.reason).filter(Boolean);
+
+        showToast(`Imported: ${created}, Skipped: ${skipped}`, 'success');
+        if (topErrors.length) {
+          showToast(`Skipped reasons: ${topErrors.join(' · ')}${errors.length > 3 ? ` (+${errors.length - 3} more)` : ''}`, 'info', 7000);
+        }
         fetchLeads();
+      } else {
+        showToast('Import failed. Please check the file format.', 'error');
       }
     };
     reader.readAsBinaryString(file);
+  };
+
+  const downloadTemplate = () => {
+    const sample = [
+      {
+        name: 'John Doe',
+        contact: '9876543210',
+        alternateContact: '',
+        email: 'john@example.com',
+        company: 'Acme Pvt Ltd',
+        source: 'Google',
+        city: 'Chennai',
+        state: 'TN',
+        country: 'India',
+        address: 'Example street',
+        interest: 'Product A',
+        priority: 'Medium',
+        status: 'New',
+      },
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(sample, { header: IMPORT_COLUMNS });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'LeadsTemplate');
+    XLSX.writeFile(wb, 'Leads_Import_Template.xlsx');
   };
 
   const handleExport = async () => {
@@ -126,17 +189,26 @@ const LeadTable = () => {
       Header: 'Actions',
       id: 'actions',
       Cell: ({ row }) => (
-        <div className="flex gap-1">
-          <button onClick={() => navigate(`/lead/${row.original._id}`)} className="bg-gray-500 text-white px-2 py-1 rounded text-xs">Profile</button>
-          <button onClick={() => navigate(`/calling/${row.original._id}`)} className="bg-primary text-white px-2 py-1 rounded text-xs hover:bg-primary-dark">Call</button>
-          <button onClick={() => navigate(`/lead-edit/${row.original._id}`)} className="bg-blue-500 text-white px-2 py-1 rounded text-xs">Log</button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="secondary" onClick={() => navigate(`/lead/${row.original._id}`)}>
+            Profile
+          </Button>
+          <Button size="sm" onClick={() => navigate(`/calling/${row.original._id}`)}>
+            <PhoneCall size={16} />
+            Call
+          </Button>
+          {!isCallMode && (
+            <Button size="sm" variant="ghost" onClick={() => navigate(`/lead-edit/${row.original._id}`)}>
+              Log
+            </Button>
+          )}
           {isAdmin && (
             <button onClick={() => handleDelete(row.original._id)} className="text-red-500 p-1"><Trash2 size={16} /></button>
           )}
         </div>
       ),
     },
-  ], [leads, selected, isAdmin]);
+  ], [selected, isAdmin, isCallMode, navigate, showToast]);
 
   const tableInstance = useTable({ columns, data: leads, initialState: { pageSize: 15 } }, useGlobalFilter, useSortBy, usePagination);
   const { getTableProps, getTableBodyProps, headerGroups, page, prepareRow, setGlobalFilter, nextPage, previousPage, canNextPage, canPreviousPage, pageOptions, state: { pageIndex, globalFilter } } = tableInstance;
@@ -144,82 +216,149 @@ const LeadTable = () => {
   if (loading) return <div className="mt-32 text-center">Loading...</div>;
 
   return (
-    <div className="mx-auto p-4 mt-20">
-      <h2 className="text-4xl font-bold mb-6 text-center">Lead Management</h2>
-
-      <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-        <div className="flex gap-2 flex-wrap">
-          <input placeholder="Search..." value={globalFilter || ''} onChange={(e) => setGlobalFilter(e.target.value)} className="border p-2 rounded w-48" />
-          <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="border p-2 rounded">
-            <option value="">All Status</option>
-            {LEAD_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-          <input type="date" value={filters.startDate} onChange={(e) => setFilters({ ...filters, startDate: e.target.value })} className="border p-2 rounded" />
-          <input type="date" value={filters.endDate} onChange={(e) => setFilters({ ...filters, endDate: e.target.value })} className="border p-2 rounded" />
-          <button onClick={fetchLeads} className="bg-blue-500 text-white px-4 py-2 rounded flex items-center"><FaFilter className="mr-1" /> Filter</button>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {isAdmin && (
-            <>
-              <input type="file" ref={fileRef} accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
-              <button onClick={() => fileRef.current?.click()} className="bg-purple-500 text-white px-4 py-2 rounded flex items-center"><FaUpload className="mr-1" /> Import</button>
-              <button onClick={handleExport} className="bg-primary text-white px-4 py-2 rounded flex items-center hover:bg-primary-dark"><FaFileDownload className="mr-1" /> Export</button>
-              <select value={assignTo} onChange={(e) => setAssignTo(e.target.value)} className="border p-2 rounded">
-                <option value="">Assign to...</option>
-                {employees.map((e) => (
-                  <option key={e._id} value={e._id}>
-                    {e.name} ({normalizeRole(e.role) || 'No role'})
-                  </option>
-                ))}
-              </select>
-              <button onClick={handleBulkAssign} className="bg-orange-500 text-white px-4 py-2 rounded">Bulk Assign</button>
-            </>
+    <PageShell
+      title={isCallMode ? "Calling Queue" : "Lead Management"}
+      description={
+        isCallMode
+          ? "Your leads with call-first actions. Click Call to start and save the outcome."
+          : isTelecaller
+            ? "Only your assigned leads are shown."
+            : "Import, manage, assign, and export leads."
+      }
+      actions={
+        <div className="flex flex-wrap gap-2">
+          {isCallMode && (
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>
+              Back to Dashboard
+            </Button>
           )}
-          <Link to="/lead-form" className="bg-blue-500 text-white px-4 py-2 rounded flex items-center"><FaPlus className="mr-1" /> Add Lead</Link>
+          {!isTelecaller && (
+            <Link to="/lead-form">
+              <Button>
+                <FaPlus />
+                Add Lead
+              </Button>
+            </Link>
+          )}
         </div>
-      </div>
+      }
+    >
+      <Card className="p-4">
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
+          <div className="flex gap-2 flex-wrap">
+            <input
+              placeholder="Search..."
+              value={globalFilter || ''}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="border p-2 rounded w-56"
+            />
+            <select
+              value={filters.status}
+              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+              className="border p-2 rounded"
+            >
+              <option value="">All Status</option>
+              {LEAD_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+            {!isCallMode && (
+              <>
+                <input type="date" value={filters.startDate} onChange={(e) => setFilters({ ...filters, startDate: e.target.value })} className="border p-2 rounded" />
+                <input type="date" value={filters.endDate} onChange={(e) => setFilters({ ...filters, endDate: e.target.value })} className="border p-2 rounded" />
+              </>
+            )}
+            <Button variant="secondary" onClick={fetchLeads}>
+              <FaFilter /> Filter
+            </Button>
+          </div>
 
-      {error && <p className="text-red-500 mb-2">{error}</p>}
+          <div className="flex gap-2 flex-wrap">
+            {isAdmin && (
+              <>
+                <input type="file" ref={fileRef} accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
+                <Button variant="secondary" onClick={() => fileRef.current?.click()}>
+                  <FaUpload /> Import
+                </Button>
+                <Button variant="ghost" onClick={downloadTemplate}>
+                  Download Template
+                </Button>
+                <Button onClick={handleExport}>
+                  <FaFileDownload /> Export
+                </Button>
+                <select value={assignTo} onChange={(e) => setAssignTo(e.target.value)} className="border p-2 rounded">
+                  <option value="">Assign to...</option>
+                  {employees.map((e) => (
+                    <option key={e._id} value={e._id}>
+                      {e.name} ({normalizeRole(e.role) || 'No role'})
+                    </option>
+                  ))}
+                </select>
+                <Button className="bg-orange-500 hover:bg-orange-600 focus:ring-orange-500" onClick={handleBulkAssign}>
+                  Bulk Assign
+                </Button>
+              </>
+            )}
+            {!isTelecaller && (
+              <Link to="/lead-form">
+                <Button variant="secondary">
+                  <FaPlus /> Add Lead
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
 
-      <div className="overflow-x-auto bg-white shadow rounded-lg">
-        {leads.length === 0 ? <p className="text-center p-4">No leads found.</p> : (
-          <>
-            <table {...getTableProps()} className="w-full">
-              <thead className="bg-blue-600 text-white">
-                {headerGroups.map((hg) => (
-                  <tr {...hg.getHeaderGroupProps()}>
-                    {hg.headers.map((col) => (
-                      <th {...col.getHeaderProps(col.getSortByToggleProps())} className="p-3 text-left whitespace-nowrap">
-                        {col.render('Header')}{col.isSorted ? (col.isSortedDesc ? ' 🔽' : ' 🔼') : ''}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody {...getTableBodyProps()}>
-                {page.map((row) => {
-                  prepareRow(row);
-                  return (
-                    <tr {...row.getRowProps()} className="border-b hover:bg-gray-50">
-                      {row.cells.map((cell) => (
-                        <td {...cell.getCellProps()} className="p-3 whitespace-nowrap">{cell.render('Cell')}</td>
+        {error && <p className="text-red-600 mb-2">{error}</p>}
+
+        <div className="overflow-x-auto">
+          {leads.length === 0 ? (
+            <p className="text-center p-6 text-slate-500">No leads found.</p>
+          ) : (
+            <>
+              <table {...getTableProps()} className="w-full">
+                <thead className="bg-primary text-white">
+                  {headerGroups.map((hg) => (
+                    <tr key={hg.id} {...hg.getHeaderGroupProps()}>
+                      {hg.headers.map((col) => (
+                        <th
+                          key={col.id}
+                          {...col.getHeaderProps(col.getSortByToggleProps())}
+                          className="p-3 text-left whitespace-nowrap text-sm font-semibold"
+                        >
+                          {col.render('Header')}
+                          {col.isSorted ? (col.isSortedDesc ? ' 🔽' : ' 🔼') : ''}
+                        </th>
                       ))}
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            <div className="flex justify-between p-4">
-              <span>Page {pageIndex + 1} of {pageOptions.length}</span>
-              <div className="space-x-2">
-                <button onClick={previousPage} disabled={!canPreviousPage} className="px-4 py-1 bg-blue-500 text-white rounded disabled:opacity-50">Prev</button>
-                <button onClick={nextPage} disabled={!canNextPage} className="px-4 py-1 bg-blue-500 text-white rounded disabled:opacity-50">Next</button>
+                  ))}
+                </thead>
+                <tbody {...getTableBodyProps()}>
+                  {page.map((row) => {
+                    prepareRow(row);
+                    return (
+                      <tr key={row.id} {...row.getRowProps()} className="border-b hover:bg-slate-50">
+                        {row.cells.map((cell) => (
+                          <td key={cell.column.id} {...cell.getCellProps()} className="p-3 whitespace-nowrap text-sm">
+                            {cell.render('Cell')}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              <div className="flex flex-wrap justify-between items-center gap-3 p-4">
+                <span className="text-sm text-slate-600">Page {pageIndex + 1} of {pageOptions.length}</span>
+                <div className="flex gap-2">
+                  <Button variant="secondary" size="sm" onClick={previousPage} disabled={!canPreviousPage}>Prev</Button>
+                  <Button variant="secondary" size="sm" onClick={nextPage} disabled={!canNextPage}>Next</Button>
+                </div>
               </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+            </>
+          )}
+        </div>
+      </Card>
+    </PageShell>
   );
 };
 

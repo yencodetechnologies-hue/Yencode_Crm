@@ -731,9 +731,9 @@ export const getCallsByLead = async (leadId) => {
     }
 };
 
-export const getTodayCalls = async () => {
+export const getTodayCalls = async (params = {}) => {
     try {
-        const response = await projectServices.get('/calls/today');
+        const response = await projectServices.get('/calls/today', { params });
         return response;
     } catch (err) {
         return err;
@@ -750,9 +750,9 @@ export const getFollowUps = async (params = {}) => {
     }
 };
 
-export const getTodayFollowUps = async () => {
+export const getTodayFollowUps = async (params = {}) => {
     try {
-        const response = await projectServices.get('/followups/today');
+        const response = await projectServices.get('/followups/today', { params });
         return response;
     } catch (err) {
         return err;
